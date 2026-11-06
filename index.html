@@ -45,6 +45,7 @@ button:disabled{opacity:.4}
 .sw{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #fff4;vertical-align:-2px;margin-right:6px}
 .log{font-size:12.5px;line-height:1.55;color:#aab4bc}.log .w{color:#7ed957}.log .l{color:#e5534b}.log .y{color:#e3b341}
 input{width:100%;background:#252d35;border:1px solid #3a444d;border-radius:8px;color:#fff;padding:9px;font-size:14px;margin:6px 0}
+img.ic{width:14px;height:14px;vertical-align:-3px;margin:0 2px 0 0;image-rendering:pixelated;pointer-events:none}
 #toast{position:absolute;top:92px;left:50%;transform:translateX(-50%);background:#000c;padding:7px 13px;border-radius:10px;font-size:12px;z-index:30;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
 </style>
@@ -704,10 +705,11 @@ function setScene(s){scene=s;closeSheet();
  $('hint').textContent=s==='city'?'Тащи карту · тапни здание, чтобы идти в вылазку':'';
  if(s==='city'){if(!cityCv)buildCity();cam.x=60;cam.y=0}
  updHud()}
+const ic=n=>'<img class="ic" src="assets/icons/icon_'+n+'.png" alt="">';
 function updHud(){const h=$('hud');if(scene==='create'){h.innerHTML='';return}
- h.innerHTML=`<div class="hr"><span>${S.name} · ур.${S.lvl}</span><span>💰 ${S.caps} &nbsp;⭐ ${S.pts}</span></div>
+ h.innerHTML=`<div class="hr"><span>${S.name} · ур.${S.lvl}</span><span>${ic('caps')}${S.caps} &nbsp;${ic('star')}${S.pts}</span></div>
  <div class="hb"><i><u style="width:${S.hp/maxHp()*100}%;background:#e5534b"></u></i><i><u style="width:${S.sat}%;background:#e3b341"></u></i><i><u style="width:${S.thr}%;background:#58a6ff"></u></i><i><u style="width:${S.en}%;background:#7ed957"></u></i></div>
- <div class="hres">🍖${S.res.food} 💧${S.res.water} 🔩${S.res.scrap} 💊${S.res.meds} ⚙️${S.res.parts}</div>`}
+ <div class="hres">${ic('food')}${S.res.food} ${ic('water')}${S.res.water} ${ic('scrap')}${S.res.scrap} ${ic('medkit')}${S.res.meds} ${ic('parts')}${S.res.parts}</div>`}
 
 /* ============ INPUT ============ */
 let ptr=null;

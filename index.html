@@ -45,6 +45,11 @@ button:disabled{opacity:.4}
 .sw{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #fff4;vertical-align:-2px;margin-right:6px}
 .log{font-size:12.5px;line-height:1.55;color:#aab4bc}.log .w{color:#7ed957}.log .l{color:#e5534b}.log .y{color:#e3b341}
 input{width:100%;background:#252d35;border:1px solid #3a444d;border-radius:8px;color:#fff;padding:9px;font-size:14px;margin:6px 0}
+#hud .hb{gap:3px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+button.lk{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;font-size:11px}
+button.lk img{height:92px;max-width:100%;object-fit:contain}
+button.lk.p{outline:2px solid #7ed957}
 img.ic{width:14px;height:14px;vertical-align:-3px;margin:0 2px 0 0;image-rendering:pixelated;pointer-events:none}
 #toast{position:absolute;top:92px;left:50%;transform:translateX(-50%);background:#000c;padding:7px 13px;border-radius:10px;font-size:12px;z-index:30;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
@@ -94,7 +99,11 @@ const ARMORS=[
  {id:'rags',n:'Лохмотья',def:0,t:0,col:'#7a6a5a'},{id:'jacket',n:'Кожанка',def:1,t:1,col:'#4a3426'},
  {id:'vest',n:'Бронежилет',def:3,t:2,col:'#4a5560'},{id:'plate',n:'Пластины',def:5,t:3,col:'#6a6f78'},
  {id:'swat',n:'Броня SWAT',def:8,t:4,col:'#2f3640'}];
-const RES={food:'🍖 Еда',water:'💧 Вода',scrap:'🔩 Лом',meds:'💊 Аптечки',parts:'⚙️ Детали'};
+const ic=n=>'<img class="ic" src="assets/icons/icon_'+n+'.png" alt="">';
+const RES={food:'Еда',water:'Вода',scrap:'Лом',meds:'Аптечки',parts:'Детали'};
+const RESIC={food:'food',water:'water',scrap:'scrap',meds:'medkit',parts:'parts'};
+const RESE={food:'🍖',water:'💧',scrap:'🔩',meds:'💊',parts:'⚙️'};
+const rI=k=>ic(RESIC[k]),rN=k=>rI(k)+' '+RES[k];
 const SELL={food:2,water:2,scrap:1,meds:6,parts:4};
 const SHELTER=[
  {id:'garden',n:'Огород',i:'🥕',desc:'Выращивает еду (до 8 часов копится)',base:{scrap:10},max:5},
@@ -141,24 +150,27 @@ function fresh(){const n=Date.now();return{
  gear:{weapons:['fists'],armors:['rags'],w:'fists',a:'rags'},
  deco:{sh:DEF_DECO(),st:DEF_DECO()},
  owned:['w0','f0','p0','r0','l0','n0'],
- raids:0,kills:0}}
+ raids:0,kills:0,
+ traits:[],sk:{scout:0,medic:0,mech:0,stalker:0,garden:0,wolf:0},sp:0,fun:80,comf:70,cd:{},cool:{}}}
 let S=fresh(),sleeping=false;
-const maxHp=()=>100+(S.lvl-1)*10;
+const hasT=id=>S.traits.includes(id);
+const maxHp=()=>100+(S.lvl-1)*10-(hasT('frail')?20:0);
 const WP=()=>WEAPONS.find(x=>x.id===S.gear.w);
 const AR=()=>ARMORS.find(x=>x.id===S.gear.a);
-const atk=()=>WP().atk+S.lvl;
-const def=()=>AR().def+S.sh.wall;
+const atk=()=>WP().atk+S.lvl+(hasT('strong')?2:0)+(hasT('stubborn')?1:0)+S.sk.wolf;
+const def=()=>AR().def+S.sh.wall+S.sk.stalker;
 
 function save(){S.t=Date.now();const s=JSON.stringify(S);try{localStorage.setItem(SAVE_KEY,s)}catch(e){}
  if(TG&&TG.CloudStorage&&TG.isVersionAtLeast&&TG.isVersionAtLeast('6.9')){try{TG.CloudStorage.setItem(SAVE_KEY,s)}catch(e){}}}
 function load(cb){let local=null;try{local=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){}
- const fin=cloud=>{let b=local;if(cloud&&(!b||cloud.t>b.t))b=cloud;if(b){S=Object.assign(fresh(),b);S.deco=Object.assign({sh:DEF_DECO(),st:DEF_DECO()},b.deco||{});if(S.look!=null&&!S.app)S.app={sex:'male',tone:'tan'}}cb()};
+ const fin=cloud=>{let b=local;if(cloud&&(!b||cloud.t>b.t))b=cloud;if(b){S=Object.assign(fresh(),b);S.deco=Object.assign({sh:DEF_DECO(),st:DEF_DECO()},b.deco||{});if(S.look!=null&&!S.app)S.app={sex:'male',tone:'tan'};if(S.app&&!S.app.look)S.app.look=S.app.tone||'tan';S.sk=Object.assign(fresh().sk,b.sk||{});S.traits=b.traits||[];S.cd=b.cd||{};S.cool=b.cool||{}}cb()};
  if(TG&&TG.CloudStorage&&TG.isVersionAtLeast&&TG.isVersionAtLeast('6.9')){try{TG.CloudStorage.getItem(SAVE_KEY,(e,v)=>{let c=null;try{c=JSON.parse(v)}catch(x){}fin(c)});return}catch(e){}}
  fin(null)}
 
 function tick(m){if(m<=0)return;
- if(sleeping){S.en=clamp(S.en+m*(2+S.sh.bunk*.8),0,100);S.sat=clamp(S.sat-m*.08,0,100);S.thr=clamp(S.thr-m*.1,0,100);if(S.en>=100){sleeping=false;toast('Выспался 😴')}}
- else{S.sat=clamp(S.sat-m*.15,0,100);S.thr=clamp(S.thr-m*.2,0,100);S.en=clamp(S.en+m*.05,0,100)}
+ const hung=(hasT('glutton')?1.4:1)*(hasT('hardy')?.7:1);
+ if(sleeping){S.en=clamp(S.en+m*(2+S.sh.bunk*.8)*(hasT('sleeper')?1.4:1),0,100);S.sat=clamp(S.sat-m*.08*hung,0,100);S.thr=clamp(S.thr-m*.1*hung,0,100);S.comf=clamp(S.comf+m*.4,0,100);if(S.en>=100){sleeping=false;toast('Выспался')}}
+ else{S.sat=clamp(S.sat-m*.15*hung,0,100);S.thr=clamp(S.thr-m*.2*hung,0,100);S.en=clamp(S.en+m*.05,0,100);S.fun=clamp(S.fun-m*.12,0,100);S.comf=clamp(S.comf-m*.1*(hasT('smoker')?1.5:1),0,100)}
  if(S.sat<=0||S.thr<=0)S.hp=clamp(S.hp-m*.5,0,maxHp());else if(S.sat>40&&S.thr>40)S.hp=clamp(S.hp+m*.1,0,maxHp())}
 function offline(){tick(Math.min((Date.now()-S.t)/60000,480))}
 setInterval(()=>{tick(5/60);save();updHud()},5000);
@@ -166,11 +178,11 @@ setInterval(()=>{tick(5/60);save();updHud()},5000);
 /* ============ ECONOMY ============ */
 const canPay=c=>Object.keys(c).every(k=>(k==='caps'||k==='pts'?S[k]:S.res[k])>=c[k]);
 const pay=c=>{for(const k in c){if(k==='caps'||k==='pts')S[k]-=c[k];else S.res[k]-=c[k]}};
-const costStr=c=>Object.keys(c).filter(k=>c[k]).map(k=>(k==='caps'?'💰':k==='pts'?'⭐':RES[k].split(' ')[0])+c[k]).join(' ');
+const costStr=c=>Object.keys(c).filter(k=>c[k]).map(k=>(k==='caps'?ic('caps'):k==='pts'?ic('star'):rI(k))+c[k]).join(' ');
 function shCost(b){const l=S.sh[b.id],o={};for(const k in b.base)o[k]=Math.ceil(b.base[k]*Math.pow(1.7,l));return o}
 function pend(k){const l={food:S.sh.garden,water:S.sh.rain,scrap:S.sh.work}[k];const m={food:3,water:3,scrap:2}[k];
- const h=Math.min((Date.now()-S.col[k])/3600000,8);return Math.floor(h*l*m*1)}
-function collectOne(k){const n=pend(k);if(n<1)return toast('Пока пусто');S.res[k]+=n;S.col[k]=Date.now();fx(CH.x,CH.y-40,'+'+n+' '+RES[k].split(' ')[0],'#7ed957');haptic();save();refresh()}
+ const h=Math.min((Date.now()-S.col[k])/3600000,8);return Math.floor(h*l*m*(k==='scrap'?1:1+.15*S.sk.garden))}
+function collectOne(k){const n=pend(k);if(n<1)return toast('Пока пусто');S.res[k]+=n;S.col[k]=Date.now();fx(CH.x,CH.y-40,'+'+n+' '+RESE[k],'#7ed957');haptic();save();refresh()}
 function upg(id){const b=SHELTER.find(x=>x.id===id),c=shCost(b);if(!canPay(c)||S.sh[id]>=b.max)return;
  for(const k of['food','water','scrap']){const n=pend(k);if(n>0){S.res[k]+=n}S.col[k]=Date.now()}
  pay(c);S.sh[id]++;haptic();toast(b.n+' → ур.'+S.sh[id]);save();refresh()}
@@ -178,7 +190,7 @@ function act(a){haptic();
  if(S.hp<=0&&a!=='heal')return toast('Сначала аптечка 💊');
  if(a==='feed'){if(S.res.food<1)return toast('Нет еды');S.res.food--;S.sat=clamp(S.sat+25,0,100)}
  if(a==='drink'){if(S.res.water<1)return toast('Нет воды');S.res.water--;S.thr=clamp(S.thr+30,0,100)}
- if(a==='heal'){if(S.res.meds<1)return toast('Нет аптечек');S.res.meds--;S.hp=clamp(S.hp+40,1,maxHp())}
+ if(a==='heal'){if(S.res.meds<1)return toast('Нет аптечек');S.res.meds--;S.hp=clamp(S.hp+40+10*S.sk.medic,1,maxHp())}
  if(a==='sleep'){sleeping=!sleeping;if(sleeping){CH.floor=0;CH.y=floorY(0);CH.path=[];if(scene!=='shelter')setScene('shelter')}else{CH.x=100}}
  save();refresh()}
 function equip(k,id){if(k==='w')S.gear.w=id;else S.gear.a=id;haptic();save();refresh()}
@@ -190,30 +202,79 @@ function dcost(i){return{caps:i.caps,pts:i.pts}}
 function setDeco(id){S.deco[scene==='storage'?'st':'sh'][DITEM[id].cat]=id;haptic();save();refresh()}
 function buyDeco(id){const i=DITEM[id],c=dcost(i);if(!canPay(c))return toast('Не хватает 💰/⭐');pay(c);S.owned.push(id);setDeco(id)}
 
+/* ============ ХАРАКТЕР, НАСТРОЕНИЕ, ОТКАЗЫ ============ */
+const RESPAWN_MS=90*60*1000;
+const TRAITS=[
+ {id:'stubborn',n:'Упрямый',v:2,d:'Отказывается раньше, зато +1 к атаке'},
+ {id:'coward',n:'Трусливый',v:2,d:'Не идёт в опасные места без оружия и брони'},
+ {id:'lazy',n:'Ленивый',v:2,d:'Вылазки на 20% дороже по энергии'},
+ {id:'glutton',n:'Обжора',v:2,d:'Быстрее голодает и хочет пить'},
+ {id:'frail',n:'Хилый',v:2,d:'Здоровья на 20 меньше'},
+ {id:'smoker',n:'Курильщик',v:1,d:'Комфорт падает быстрее'},
+ {id:'strong',n:'Сильный',v:-3,d:'+2 к атаке'},
+ {id:'tough',n:'Выносливый',v:-2,d:'Вылазки на 15% дешевле по энергии'},
+ {id:'lucky',n:'Везучий',v:-3,d:'Добычи на 20% больше'},
+ {id:'hardy',n:'Неприхотливый',v:-2,d:'Медленнее голодает и хочет пить'},
+ {id:'sleeper',n:'Лёгкий сон',v:-2,d:'Быстрее восстанавливается во сне'}];
+const TR={};TRAITS.forEach(t=>TR[t.id]=t);
+const SKILLS=[
+ {id:'scout',n:'Разведчик',d:'−8% энергии на вылазки за уровень'},
+ {id:'medic',n:'Медик',d:'+10 здоровья от аптечки за уровень'},
+ {id:'mech',n:'Механик',d:'+1 лом с вылазки за уровень'},
+ {id:'stalker',n:'Сталкер',d:'+1 защита за уровень'},
+ {id:'garden',n:'Садовник',d:'+15% еды и воды с огорода и дождя за уровень'},
+ {id:'wolf',n:'Волчонок',d:'+1 атака за уровень'}];
+const SKMAX=3;
+function skUp(id){if(S.sp<1||S.sk[id]>=SKMAX)return;S.sp--;S.sk[id]++;haptic();save();refresh()}
+let LASTRAID=null,BT=null;
+function moodInfo(){const hpP=S.hp/maxHp()*100,arr=[S.sat,S.thr,S.en,hpP,S.fun,S.comf],avg=arr.reduce((a,b)=>a+b,0)/6,mn=Math.min(S.sat,S.thr,S.en,hpP);
+ let lv='neutral';if(mn<15||avg<32)lv='angry';else if(avg<52||mn<28)lv='grumpy';else if(avg>=72&&mn>=40)lv='cheerful';
+ return{lv,avg,txt:{cheerful:'Бодр',neutral:'Нормально',grumpy:'Ворчит',angry:'Злой'}[lv]}}
+function zPool(b){return b.d<=3?['regular','regular','fast']:b.d<=6?['regular','fast','soldier']:b.d<=9?['fast','soldier','bulky']:['soldier','bulky','bulky']}
+function raidCost(b){return Math.max(1,Math.ceil(b.e*(hasT('lazy')?1.2:1)*(hasT('tough')?.85:1)*(1-.08*S.sk.scout)))}
+function refusal(b){const st=hasT('stubborn')?10:0,ec=raidCost(b);
+ if(S.hp<25+st)return{r:'Мне плохо, я не пойду',fix:'heal',btn:'Вылечить'};
+ if(S.sat<22+st)return{r:'Я голоден, не пойду',fix:'feed',btn:'Покормить'};
+ if(S.thr<22+st)return{r:'Хочу пить, не пойду',fix:'drink',btn:'Напоить'};
+ if(S.en<ec)return{r:'Я вымотан, нужен отдых',fix:'sleep',btn:'Уложить спать'};
+ if(hasT('coward')&&b.d>=4&&def()<1&&WP().atk<4)return{r:'Страшно идти без оружия и брони',fix:'gear',btn:'Открыть склад'};
+ if(S.fun<12+st)return{r:'Мне тоскливо, не хочется',fix:'read',btn:'Дать почитать'};
+ if(S.comf<10+st)return{r:'Мне неуютно, хочу согреться',fix:'warm',btn:'Погреться'};
+ return null}
+function fixRaid(f,id){
+ if(f==='sleep'){act('sleep');closeSheet();setScene('shelter');return}
+ if(f==='gear'){closeSheet();setScene('storage');return}
+ if(f==='feed'||f==='drink'||f==='heal')act(f);else if(f==='read'||f==='warm')doFun(f);
+ openS(shPOI,id)}
+const CDMS={read:45000,radio:45000,warm:45000};
+function doFun(k){const l=(S.cd[k]||0)+CDMS[k]-Date.now();if(l>0)return toast('Ещё рано, подожди '+Math.ceil(l/1000)+' с');
+ if(k==='warm'){S.comf=clamp(S.comf+30,0,100);toast('Согрелся, комфорт +30')}
+ else{const g=k==='read'?35:25;S.fun=clamp(S.fun+g,0,100);toast((k==='read'?'Почитал':'Послушал радио')+', настроение +'+g)}
+ S.cd[k]=Date.now();haptic();save();refresh()}
+
 /* ============ RAID ============ */
-function raidCost(b){return b.e}
 function doRaid(b){
- S.en-=raidCost(b);S.raids++;
- const log=[`<b>${b.n}</b>`];
- const zc=b.d+rnd(1,3);let hp=S.hp,dead=false,kills=0;
+ S.en-=raidCost(b);S.raids++;S.cool[b.id]=Date.now()+RESPAWN_MS;
+ const log=[`<b>${b.n}</b> · настроение: ${moodInfo().txt}`];
+ const zc=b.d+rnd(1,3),mood=moodInfo().lv,pool=zPool(b),zs=Array.from({length:zc},()=>pool[rnd(0,pool.length-1)]),lm=(mood==='cheerful'?1.15:mood==='grumpy'?.85:1)*(hasT('lucky')?1.2:1);let hp=S.hp,dead=false,kills=0;
  for(let z=0;z<zc&&!dead;z++){let zh=4+b.d*2;
-  while(zh>0&&hp>0){zh-=atk()+rnd(0,3);if(zh>0)hp-=Math.max(1,b.d+rnd(0,2)-def())}
+  while(zh>0&&hp>0){zh-=atk()+rnd(0,3);if(zh>0)hp-=Math.max(1,b.d+rnd(0,2)-def()+(mood==='grumpy'?1:0))}
   if(hp>0)kills++;else dead=true}
- S.kills+=kills;const dmg=S.hp-Math.max(hp,0);S.hp=Math.max(hp,0);
+ S.kills+=kills;const dmg=S.hp-Math.max(hp,0);S.hp=Math.max(hp,0);LASTRAID={zc,zs,kills,dead};
  log.push(`Убито: ${kills}/${zc} · урон −${Math.round(dmg)} HP`);
  if(dead){S.hp=1;log.push('<span class="l">💀 Тебя чуть не прикончили. Еле дополз домой, добыча потеряна.</span>')}
  else{
   const got=[];
-  for(const k in b.loot){const n=rnd(b.loot[k][0],b.loot[k][1])+(k==='scrap'?Math.floor(S.sh.work/2):0);if(n>0){S.res[k]+=n;got.push(RES[k].split(' ')[0]+n)}}
-  const caps=rnd(1,3)*b.d,pts=b.d*4+kills;S.caps+=caps;S.pts+=pts;got.push('💰'+caps);got.push('⭐'+pts);
+  for(const k in b.loot){const n=Math.round(rnd(b.loot[k][0],b.loot[k][1])*lm)+(k==='scrap'?Math.floor(S.sh.work/2)+S.sk.mech:0);if(n>0){S.res[k]+=n;got.push(rI(k)+n)}}
+  const caps=rnd(1,3)*b.d,pts=b.d*4+kills;S.caps+=caps;S.pts+=pts;got.push(ic('caps')+caps);got.push(ic('star')+pts);
   log.push('<span class="w">Лут: '+got.join(' ')+'</span>');
   if(Math.random()<.18+b.d*.02){
    const isW=Math.random()<.5,t=Math.min(b.gt,rnd(Math.max(1,b.gt-1),b.gt));
    const it=(isW?WEAPONS:ARMORS).find(x=>x.t===t);
    if(it){const have=isW?S.gear.weapons:S.gear.armors;
-    if(!have.includes(it.id)){have.push(it.id);log.push(`<span class="y">✨ Нашёл: ${it.n}! (смотри на складе)</span>`)}else{S.res.scrap+=5;log.push('Дубликат снаряжения → +5 🔩')}}}
+    if(!have.includes(it.id)){have.push(it.id);log.push(`<span class="y">✨ Нашёл: ${it.n}! (смотри на складе)</span>`)}else{S.res.scrap+=5;log.push('Дубликат снаряжения → +5 '+ic('scrap'))}}}
   const xp=b.d*5;S.xp+=xp;log.push('+'+xp+' XP');
-  while(S.xp>=S.lvl*30){S.xp-=S.lvl*30;S.lvl++;S.hp=maxHp();log.push(`<span class="y">⬆️ Уровень ${S.lvl}!</span>`)}
+  while(S.xp>=S.lvl*30){S.xp-=S.lvl*30;S.lvl++;S.sp++;S.hp=maxHp();log.push(`<span class="y">⬆️ Уровень ${S.lvl}! +1 очко навыка</span>`)}
  }
  save();return log}
 
@@ -244,7 +305,12 @@ function flushText(){const k=SC*DPR;tctx.clearRect(0,0,tcv.width,tcv.height);tct
 const IMG={};
 function loadImg(k,src){const i=new Image();i.onload=()=>{IMG[k]=i};i.src=src}
 loadImg('room','assets/rooms/room_personal.webp');loadImg('hall','assets/rooms/room_hall.webp');loadImg('storage','assets/rooms/room_storage.webp');loadImg('map','assets/maps/city.webp');
-for(const sx of['female','male'])for(const tn of['light','tan','brown','dark'])loadImg('h_'+sx+'_'+tn,'assets/heroes/hero_'+sx+'_'+tn+'.png');
+const LOOKIDS={female:['light','tan','brown','dark','short','loose','braid','pigtails'],male:['light','tan','brown','dark','shaved','sidepart','afro','mohawk','beard']};
+const LOOKNAME={short:'Короткая',loose:'Распущенные',braid:'Коса',pigtails:'Хвостики',shaved:'Бритый',sidepart:'Пробор',afro:'Афро',mohawk:'Ёж',beard:'Хвост и борода'};
+for(const sx in LOOKIDS)for(const id of LOOKIDS[sx])loadImg('h_'+sx+'_'+id,'assets/heroes/hero_'+sx+'_'+id+'.png');
+const ZTYPES=['regular','fast','soldier','bulky'];
+for(const z of ZTYPES)loadImg('z_'+z,'assets/zombies/zombie_'+z+'.png');
+for(const n of['hunger','thirst','energy','health','fun','comfort','mood_cheerful','mood_neutral','mood_grumpy','mood_angry'])loadImg('i_'+n,'assets/icons/icon_'+n+'.png');
 const TONES=[['light','Светлый','#f3d2b0'],['tan','Загорелый','#d9a066'],['brown','Коричневый','#a8683a'],['dark','Тёмный','#6b4228']];
 const LOOK0={n:'Выживший',perk:'',jacket:'#6a5a4a',scarf:'#3a3d44',hair:'#4a3020',pack:'#4a4a40',pants:'#4a4f5a',head:'none',hat:'#4a4338'};
 const FLOOR={x0:18,x1:156,y0:214,y1:306},FLOORH={x0:60,x1:158,y0:236,y1:306};
@@ -252,7 +318,7 @@ const FLOORS={x0:20,x1:160,y0:224,y1:306};
 const curFloor=()=>scene==='hall'?FLOORH:scene==='storage'?FLOORS:FLOOR;
 const HERO={x:90,y:262,tx:90,ty:262,dir:1,walk:false};
 const heroH=y=>54+clamp((y-FLOOR.y0)/(FLOOR.y1-FLOOR.y0),0,1)*22;
-function heroImg(){const a=S.app||{sex:'male',tone:'tan'};return IMG['h_'+a.sex+'_'+a.tone]}
+function heroImg(){const a=S.app||{sex:'male',tone:'tan'};return IMG['h_'+a.sex+'_'+(a.look||a.tone||'tan')]}
 function updHero(dt){const dx=HERO.tx-HERO.x,dy=HERO.ty-HERO.y,d=Math.hypot(dx,dy);HERO.walk=d>1;
  if(!HERO.walk)return;const sp=62*dt;if(d<=sp){HERO.x=HERO.tx;HERO.y=HERO.ty}else{HERO.x+=dx/d*sp;HERO.y+=dy/d*sp}
  if(Math.abs(dx)>1)HERO.dir=dx>0?1:-1}
@@ -261,6 +327,13 @@ function drawHero(x,y,h,dir,o){o=o||{};const im=o.img||heroImg();if(!im)return;c
  ctx.globalAlpha=.4;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(x,y-.5,w*.4,h*.04,0,0,7);ctx.fill();ctx.globalAlpha=1;
  ctx.translate(x,y+(o.walk?Math.abs(Math.sin(time*12))*-1.3:0));if(dir<0)ctx.scale(-1,1);ctx.scale(1,1+Math.sin(time*2)*.008);
  ctx.drawImage(im,-w/2,-h,w,h);ctx.restore()}
+function drawSprite(im,x,y,h,dir,o){o=o||{};if(!im)return;const w=h*im.width/im.height;ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+ ctx.globalAlpha=o.alpha==null?1:o.alpha;ctx.translate(x,y);if(dir<0)ctx.scale(-1,1);ctx.drawImage(im,-w/2,-h,w,h);ctx.restore()}
+const zH=(z,hh)=>IMG['z_'+z]?IMG['z_'+z].height/508*hh:hh;
+function needName(){const hpP=S.hp/maxHp()*100,c=[['health',hpP],['hunger',S.sat],['thirst',S.thr],['energy',S.en],['fun',S.fun],['comfort',S.comf]].sort((a,b)=>a[1]-b[1])[0];return c[1]<30?c[0]:null}
+function drawBubble(x,y){if(sleeping)return;const n=needName(),im=n&&IMG['i_'+n];if(!im)return;const bob=Math.sin(time*4)*1;
+ ctx.save();ctx.fillStyle='rgba(255,255,255,.93)';ctx.beginPath();ctx.ellipse(x,y-9+bob,8.5,8,0,0,7);ctx.fill();ctx.fillRect(x-1.5,y-3+bob,3,4);
+ ctx.imageSmoothingEnabled=true;ctx.drawImage(im,x-6,y-15+bob,12,12);ctx.restore()}
 function glow(x,y,r,col,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');
  ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=a;ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);ctx.restore()}
 function drawRoomBg(k){const im=IMG[k||'room'];if(im){ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(im,0,0,VW,VH);ctx.restore()}
@@ -477,17 +550,17 @@ function drawWork(){
 function drawShelter(){
  HS=[];drawRoomBg();
  glow(36,130,46,'#ff9a3c',.14+.05*Math.sin(time*7)+.03*Math.sin(time*17));
- hs('shelf',0,70,42,54);hs('desk',0,122,60,80);hs('window',70,63,45,30);hs('radiator',73,128,40,30);
+ hs('shelf',0,70,42,54);hs('desk',0,122,60,80);hs('radio',8,136,24,22);hs('window',70,63,45,30);hs('radiator',73,128,40,30);
  hs('locker',130,85,28,56);hs('locker',160,104,20,120);hs('bunk',115,135,48,78);
  if(sleeping){ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(0,0,VW,VH);
   T('Z',140,120-Math.sin(time*2)*2,'#fff',9);T('z',132,130-Math.sin(time*2+1)*2,'#fff',7);return}
- drawHero(HERO.x,HERO.y,heroH(HERO.y),HERO.dir,{walk:HERO.walk});
+ drawHero(HERO.x,HERO.y,heroH(HERO.y),HERO.dir,{walk:HERO.walk});drawBubble(HERO.x,HERO.y-heroH(HERO.y)-2);
  const hh=heroH(HERO.y);hs('char',HERO.x-14,HERO.y-hh,28,hh)}
 function drawHall(){
  HS=[];drawRoomBg('hall');
  glow(102,56,50,'#ff9a3c',.13+.04*Math.sin(time*6)+.03*Math.sin(time*15));glow(22,160,34,'#ff9a3c',.10);
  hs('vault',69,117,71,107);hs('doorstore',7,112,32,133);hs('lockerh',160,139,20,114);hs('coat',46,150,16,60);
- drawHero(HERO.x,HERO.y,heroH(HERO.y),HERO.dir,{walk:HERO.walk});
+ drawHero(HERO.x,HERO.y,heroH(HERO.y),HERO.dir,{walk:HERO.walk});drawBubble(HERO.x,HERO.y-heroH(HERO.y)-2);
  const hh=heroH(HERO.y);hs('char',HERO.x-14,HERO.y-hh,28,hh)}
 function drawShelterOld(){
  HS=[];drawSurface();
@@ -507,7 +580,7 @@ function drawStorage(){
  HS=[];drawRoomBg('storage');
  glow(91,47,50,'#ff9a3c',.12+.04*Math.sin(time*6)+.03*Math.sin(time*15));
  hs('ward',0,69,70,145);hs('stock',132,80,48,92);hs('rack',109,171,71,57);
- drawHero(HERO.x,HERO.y,heroH(HERO.y),HERO.dir,{walk:HERO.walk});
+ drawHero(HERO.x,HERO.y,heroH(HERO.y),HERO.dir,{walk:HERO.walk});drawBubble(HERO.x,HERO.y-heroH(HERO.y)-2);
  const hh=heroH(HERO.y);hs('char',HERO.x-14,HERO.y-hh,28,hh)}
 function drawStorageOld(){
  HS=[];const D=S.deco.st,w=DITEM[D.wall],L=LOOK0;
@@ -555,8 +628,8 @@ function drawStorageOld(){
 function drawCreate(){
  HS=[];drawRoomBg();ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,0,VW,VH);
  T('СОЗДАЙ ГЕРОЯ',90,10,'#e3b341',9,'center');
- const im=IMG['h_'+CR.sex+'_'+CR.tone];if(im)drawHero(90,150,92,1,{img:im});
- T(CR.name||S.name||'Выживший',90,156,'#fff',8,'center')}
+ const im=IMG['h_'+CR.sex+'_'+crLook()];if(im)drawHero(90,112,80,1,{img:im});
+ T(CR.name||S.name||'Выживший',90,118,'#fff',8,'center')}
 function drawSelectOld(){
  HS=[];['#1d2230','#2a2a45','#4a3550','#6e4350'].forEach((c,i)=>R(0,i*34,VW,34,c));
  for(const b of SKY){R(b.x,150-b.h*2,b.w,b.h*2,'#16141f');for(let y=150-b.h*2+4;y<146;y+=6)if((b.x+y)%3===0)R(b.x+2,y,1,2,'#e3c46a')}
@@ -632,7 +705,7 @@ function drawCity(dt){
  HS=[];
  if(RA){RA.t+=dt;const p=Math.min(1,RA.t/RA.dur),px=HOME.x+(RA.b.x-HOME.x)*p,py=HOME.y+(RA.b.y+6-HOME.y)*p;RA.px=px;RA.py=py;
   cam.x+=((px-VW/2)-cam.x)*.1;cam.y+=((py-VH/2)-cam.y)*.1;
-  if(p>=1&&!RA.done){RA.done=true;shake=.35;flash=.35;const b=RA.b,log=doRaid(b);setTimeout(()=>{RA=null;openS(shReport,log)},450)}}
+  if(p>=1&&!RA.done){RA.done=true;shake=.35;flash=.35;const b=RA.b,log=doRaid(b);BT={t:0,dur:Math.max(2.4,Math.min(5,LASTRAID.zc*.55)),zs:LASTRAID.zs,kills:LASTRAID.kills,dead:LASTRAID.dead,log,b};setTimeout(()=>setScene('battle'),350)}}
  cam.x=clamp(cam.x,0,WW-VW);cam.y=clamp(cam.y,0,WH-VH);
  const cx=Math.round(cam.x),cy=Math.round(cam.y);
  ctx.save();if(shake>0){ctx.translate(rnd(-1,1),rnd(-1,1));shake-=dt}
@@ -642,7 +715,7 @@ function drawCity(dt){
  {const hx=HOME.x-cx,hy=HOME.y-cy;R(hx-9,hy-6,18,12,'#2a2c32');R(hx-7,hy-4,14,10,'#5a5e66');R(hx-1,hy-4,2,10,'#1a1a1e');T('ДОМ',hx,hy-15,'#7ed957',6,'center')}
  // pins + labels
  for(const b of POIS){const sx=b.x-cx,sy=b.y-cy,locked=S.lvl<b.dist.lvl;if(sx<-20||sx>VW+20||sy<-30||sy>VH+20)continue;
-  if(!locked){const col=b.d<=3?'#7ed957':b.d<=6?'#e3b341':'#e5534b',bob=Math.round(Math.sin(time*4+b.x)*2);
+  if(!locked){const cl=(S.cool[b.id]||0)>Date.now(),col=cl?'#6b6b6b':b.d<=3?'#7ed957':b.d<=6?'#e3b341':'#e5534b',bob=Math.round(Math.sin(time*4+b.x)*2);
    R(sx-4,sy-27+bob,9,7,'#000');R(sx-3,sy-26+bob,7,5,col);R(sx-1,sy-21+bob,3,3,'#000');R(sx,sy-21+bob,1,2,col)}
   T(b.n,sx,sy+14,locked?'#888':'#fff',6,'center')}
  // fog
@@ -652,37 +725,57 @@ function drawCity(dt){
  ctx.restore();
  if(flash>0){ctx.globalAlpha=Math.min(.5,flash);R(0,0,VW,VH,'#e5534b');ctx.globalAlpha=1;flash-=dt}}
 
+function finishBattle(){const log=BT.log;BT=null;RA=null;setScene('city');openS(shReport,log)}
+function drawBattle(dt){HS=[];if(!BT)return;BT.t+=dt;const b=BT.b,zc=BT.zs.length,p=Math.min(1,BT.t/BT.dur),prog=p*zc,ph=prog-Math.floor(prog),fin=BT.t>BT.dur;
+ if(IMG.map){const sx=clamp(b.x-90,0,WW-VW),sy=clamp(b.y-230,0,WH-VH);ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(IMG.map,-sx,-sy,WW,WH);ctx.restore()}else R(0,0,VW,VH,'#1b1814');
+ ctx.fillStyle='rgba(12,9,6,.66)';ctx.fillRect(0,0,VW,VH);
+ const done=Math.min(BT.kills,Math.floor(prog+(fin?1:0))),left=[];for(let i=done;i<zc&&left.length<3;i++)left.push(i);
+ const hit=!fin&&ph>.4&&ph<.55,hurt=!fin&&ph>.62&&ph<.78;
+ for(let j=left.length-1;j>=0;j--){const z=BT.zs[left[j]],sh=(j===0&&hit)?rnd(-1,1)*1.6:0;drawSprite(IMG['z_'+z],122+j*28+sh,262-j*5,zH(z,86*(1-j*.09)),-1)}
+ const lunge=!fin&&ph>.3&&ph<.6?9*Math.sin((ph-.3)/.3*Math.PI):0,dead=BT.dead&&fin;
+ drawSprite(heroImg(),50+lunge,266,86,1,{alpha:dead?.4:1});
+ if(hurt){ctx.fillStyle='rgba(229,83,75,.16)';ctx.fillRect(0,0,VW,VH)}
+ T('Убито '+done+'/'+zc,90,62,'#fff',8,'center');if(dead)T('Пришлось отступить',90,76,'#e5534b',7,'center');
+ if(BT.t>BT.dur+.7)finishBattle()}
+
 /* ============ SHEETS ============ */
 let cur=null;
-function openS(fn,...a){cur={fn,a};$('sheet').innerHTML='<button class="x" onclick="closeSheet()">✕</button>'+fn(...a);$('sheet').classList.add('open');$('shade').style.display='block'}
+function openS(fn,...a){cur={fn,a};$('sheet').innerHTML='<button class="x" onclick="closeSheet()">✕</button>'+fn(...a);$('sheet').style.maxHeight=scene==='create'?'58%':'';$('sheet').classList.add('open');$('shade').style.display='block'}
 function closeSheet(){cur=null;$('sheet').classList.remove('open');$('shade').style.display='none'}
 function refresh(){updHud();if(cur){const sc=$('sheet').scrollTop;$('sheet').innerHTML='<button class="x" onclick="closeSheet()">✕</button>'+cur.fn(...cur.a);$('sheet').scrollTop=sc}}
 const bar=(l,v,m,c)=>`<div class="bar"><b><span>${l}</span><span>${Math.round(v)}/${m}</span></b><i><u style="width:${clamp(v/m*100,0,100)}%;background:${c}"></u></i></div>`;
 
-function shNeeds(){
- return `<h3>🧍 Персонаж</h3><div class="sub">${S.name} · ур.${S.lvl}</div>
- ${bar('❤️ Здоровье',S.hp,maxHp(),'#e5534b')}${bar('🍖 Сытость',S.sat,100,'#e3b341')}${bar('💧 Жажда',S.thr,100,'#58a6ff')}${bar('⚡ Энергия',S.en,100,'#7ed957')}${bar('⭐ Опыт',S.xp,S.lvl*30,'#b88cff')}
- <div class="g2"><button onclick="act('feed')">🍖 Покормить (${S.res.food})</button><button onclick="act('drink')">💧 Напоить (${S.res.water})</button>
- <button onclick="act('heal')">💊 Лечить (${S.res.meds})</button><button onclick="act('sleep');closeSheet()">${sleeping?'⏰ Встать':'😴 Спать'}</button></div>
- <div class="sub">⚔️ Атака ${atk()} · 🛡 Защита ${def()} · Вылазок: ${S.raids} · Убито: ${S.kills}</div>`}
+function shNeeds(){const m=moodInfo(),nd=(n,l,v,mx,c)=>bar(ic(n)+' '+l,v,mx,c);
+ return `<h3><img class="ic" style="width:22px;height:22px" src="assets/icons/icon_mood_${m.lv}.png" alt=""> ${S.name} <span class="tag">ур.${S.lvl}</span></h3>
+ <div class="sub">Настроение: <b>${m.txt}</b>${S.traits.length?'<br>Черты: '+S.traits.map(t=>TR[t].n).join(', '):''}</div>
+ ${nd('health','Здоровье',S.hp,maxHp(),'#e5534b')}${nd('hunger','Сытость',S.sat,100,'#e3b341')}${nd('thirst','Жажда',S.thr,100,'#58a6ff')}${nd('energy','Энергия',S.en,100,'#7ed957')}${nd('fun','Развлечение',S.fun,100,'#b88cff')}${nd('comfort','Комфорт',S.comf,100,'#e08a3c')}${nd('star','Опыт',S.xp,S.lvl*30,'#d8b04a')}
+ <div class="g2"><button onclick="act('feed')">${ic('food')} Покормить (${S.res.food})</button><button onclick="act('drink')">${ic('water')} Напоить (${S.res.water})</button>
+ <button onclick="act('heal')">${ic('medkit')} Лечить (${S.res.meds})</button><button onclick="act('sleep');closeSheet()">${sleeping?'Встать':'Спать'}</button>
+ <button onclick="doFun('read')">${ic('fun')} Почитать</button><button onclick="doFun('warm')">${ic('comfort')} Погреться</button></div>
+ <button style="width:100%;margin-top:6px" onclick="openS(shSkills)">Навыки${S.sp?' ('+S.sp+')':''}</button>
+ <div class="sub">Атака ${atk()} · Защита ${def()} · Вылазок: ${S.raids} · Убито: ${S.kills}</div>`}
+function shSkills(){return `<h3>Навыки</h3><div class="sub">Свободных очков: <b>${S.sp}</b>. Очко даётся за каждый новый уровень.</div>`+SKILLS.map(k=>`<div class="it"><div>${k.n} <span class="tag">${S.sk[k.id]}/${SKMAX}</span><small>${k.d}</small></div><button ${S.sp<1||S.sk[k.id]>=SKMAX?'disabled':''} onclick="skUp('${k.id}')">+1</button></div>`).join('')+`<button style="width:100%;margin-top:8px" onclick="openS(shNeeds)">← Герой</button>`}
 function craftList(){
  const l=[...WEAPONS.map(x=>['w',x]),...ARMORS.map(x=>['a',x])].filter(([k,x])=>x.t>0&&x.t<=S.sh.work+1&&!(k==='w'?S.gear.weapons:S.gear.armors).includes(x.id));
  return `<h3 style="margin-top:12px">🔨 Крафт</h3>`+(S.sh.work<1?'<div class="sub">Улучши мастерскую, чтобы крафтить.</div>':l.length?l.map(([k,x])=>`<div class="it"><div>${x.n}<small>${k==='w'?'Атака +'+x.atk:'Защита +'+x.def}</small></div><button ${canPay(craftCost(x))?'':'disabled'} onclick="craft('${k}','${x.id}')">${costStr(craftCost(x))}</button></div>`).join(''):'<div class="sub">Всё доступное скрафчено. Улучши мастерскую.</div>')}
 function shBuilding(id){const b=SHELTER.find(x=>x.id===id),l=S.sh[id],c=shCost(b),maxed=l>=b.max;
  const pk={garden:'food',rain:'water',work:'scrap'}[id];
  let h=`<h3>${b.i} ${b.n} <span class="tag">ур.${l}/${b.max}</span></h3><div class="sub">${b.desc}${id==='wall'?'. Сейчас: +'+l+' 🛡':''}</div>`;
- if(pk)h+=`<button class="p" style="width:100%;margin-bottom:8px" ${pend(pk)<1?'disabled':''} onclick="collectOne('${pk}')">Собрать ${RES[pk]}: ${pend(pk)}</button>`;
+ if(pk)h+=`<button class="p" style="width:100%;margin-bottom:8px" ${pend(pk)<1?'disabled':''} onclick="collectOne('${pk}')">Собрать ${rN(pk)}: ${pend(pk)}</button>`;
  if(id==='bunk')h+=`<button style="width:100%;margin-bottom:8px" onclick="act('sleep');closeSheet()">${sleeping?'⏰ Встать':'😴 Лечь спать'}</button>`;
  h+=`<button style="width:100%" ${maxed||!canPay(c)?'disabled':''} onclick="upg('${id}')">${maxed?'Максимальный уровень':'⬆️ Улучшить: '+costStr(c)}</button>`;
  if(id==='work')h+=craftList();return h}
-function shPOI(id){const b=POIS.find(x=>x.id===id),ec=raidCost(b),ok=S.en>=ec&&S.hp>0;
- return `<h3>${b.n}</h3><div class="sub">${b.dist.n} · опасность ${'💀'.repeat(Math.min(5,Math.ceil(b.d/2.2)))} · ⚡ ${ec}</div>
- <div class="sub">Можно найти: ${Object.keys(b.loot).map(k=>RES[k]).join(', ')}, 💰 крышки, ⭐ очки; иногда оружие или броню.</div>
- ${bar('❤️',S.hp,maxHp(),'#e5534b')}${bar('⚡',S.en,100,'#7ed957')}<div class="sub">⚔️ ${atk()} · 🛡 ${def()}</div>
- <button class="p" style="width:100%" ${ok?'':'disabled'} onclick="startRaid('${id}')">${S.hp<=0?'Нужна аптечка':S.en<ec?'Мало энергии':'🚶 Выйти на вылазку'}</button>`}
+function shPOI(id){const b=POIS.find(x=>x.id===id),ec=raidCost(b),rf=refusal(b),cd=Math.max(0,(S.cool[b.id]||0)-Date.now());
+ return `<h3>${b.n}</h3><div class="sub">${b.dist.n} · опасность ${'💀'.repeat(Math.min(5,Math.ceil(b.d/2.2)))} · ${ic('energy')} ${ec}</div>
+ <div class="sub">Здесь бродят: ${[...new Set(zPool(b))].map(z=>`<img src="assets/zombies/zombie_${z}.png" style="height:36px;vertical-align:bottom;margin-right:6px" alt="">`).join('')}</div>
+ <div class="sub">Можно найти: ${Object.keys(b.loot).map(k=>rN(k)).join(', ')}, ${ic('caps')} крышки, ${ic('star')} очки; иногда оружие или броню.</div>
+ ${bar(ic('health')+' Здоровье',S.hp,maxHp(),'#e5534b')}${bar(ic('energy')+' Энергия',S.en,100,'#7ed957')}<div class="sub">Атака ${atk()} · Защита ${def()}</div>`+
+ (cd>0?`<div class="sub">Здание обчищено. Снова будет добыча через ${Math.ceil(cd/60000)} мин.</div><button style="width:100%" disabled>Здесь пусто</button>`
+ :rf?`<div class="sub"><img class="ic" style="width:22px;height:22px" src="assets/icons/icon_mood_angry.png" alt=""> <b>${rf.r}</b></div><button class="p" style="width:100%" onclick="fixRaid('${rf.fix}','${id}')">${rf.btn}</button>`
+ :`<button class="p" style="width:100%" onclick="startRaid('${id}')">Выйти на вылазку</button>`)}
 function shReport(log){return `<h3>📋 Отчёт</h3><div class="log">${log.join('<br>')}</div><button class="p" style="width:100%;margin-top:10px" onclick="closeSheet()">Продолжить</button>`}
-function startRaid(id){const b=POIS.find(x=>x.id===id);closeSheet();const L=Math.hypot(b.x-HOME.x,b.y-HOME.y);RA={b,t:0,dur:Math.max(1.4,L/60),px:HOME.x,py:HOME.y,done:false};$('hint').textContent=''}
-function shStock(){return `<h3>📦 Склад</h3><div class="sub">Излишки можно продать за 💰</div>`+Object.keys(RES).map(k=>`<div class="it"><div>${RES[k]}: <b>${S.res[k]}</b><small>${SELL[k]} 💰 за штуку</small></div><button ${S.res[k]<1?'disabled':''} onclick="sell('${k}')">Продать ${Math.min(5,S.res[k])}</button></div>`).join('')}
+function startRaid(id){const b=POIS.find(x=>x.id===id);if(refusal(b)||(S.cool[b.id]||0)>Date.now())return openS(shPOI,id);closeSheet();const L=Math.hypot(b.x-HOME.x,b.y-HOME.y);RA={b,t:0,dur:Math.max(1.4,L/60),px:HOME.x,py:HOME.y,done:false};$('hint').textContent=''}
+function shStock(){return `<h3>📦 Склад</h3><div class="sub">Излишки можно продать за 💰</div>`+Object.keys(RES).map(k=>`<div class="it"><div>${rN(k)}: <b>${S.res[k]}</b><small>${SELL[k]} 💰 за штуку</small></div><button ${S.res[k]<1?'disabled':''} onclick="sell('${k}')">Продать ${Math.min(5,S.res[k])}</button></div>`).join('')}
 function shWard(){return `<h3>👕 Шкаф с бронёй</h3><div class="sub">Защита: ${def()}</div>`+ARMORS.map(a=>{const h=S.gear.armors.includes(a.id);return `<div class="it"><div><span class="sw" style="background:${a.col}"></span>${h?a.n:'???'}<small>${h?'Защита +'+a.def:'Найди в вылазках или скрафти'}</small></div>${h?`<button class="${S.gear.a===a.id?'p':''}" onclick="equip('a','${a.id}')">${S.gear.a===a.id?'Надето':'Надеть'}</button>`:''}</div>`}).join('')}
 function shRack(){return `<h3>🔫 Оружие</h3><div class="sub">Атака: ${atk()}</div>`+WEAPONS.map(a=>{const h=S.gear.weapons.includes(a.id);return `<div class="it"><div>${h?a.n:'???'}<small>${h?'Атака +'+a.atk:'Найди в вылазках или скрафти'}</small></div>${h?`<button class="${S.gear.w===a.id?'p':''}" onclick="equip('w','${a.id}')">${S.gear.w===a.id?'В руках':'Взять'}</button>`:''}</div>`}).join('')}
 function shDeco(cat){cat=cat||'wall';const cs=scene==='storage'?'st':'sh';
@@ -690,13 +783,23 @@ function shDeco(cat){cat=cat||'wall';const cs=scene==='storage'?'st':'sh';
  <div class="tabs">${Object.keys(DECO).map(k=>`<button class="${k===cat?'on':''}" onclick="openS(shDeco,'${k}')">${DECO[k].n}</button>`).join('')}</div>`+
  DECO[cat].items.map(i=>{const own=S.owned.includes(i.id),on=S.deco[cs][cat]===i.id,c=dcost(i);
   return `<div class="it"><div>${i.c?`<span class="sw" style="background:${i.c}"></span>`:''}${i.n}</div>${own?`<button class="${on?'p':''}" ${on?'disabled':''} onclick="setDeco('${i.id}')">${on?'✓ Выбрано':'Выбрать'}</button>`:`<button ${canPay(c)?'':'disabled'} onclick="buyDeco('${i.id}')">${costStr(c)}</button>`}</div>`}).join('')}
-const CR={name:'',sex:'male',tone:'tan'};
-function shCreate(){return `<h3>Создай героя</h3><div class="sub">Имя:</div><input id="nm" maxlength="16" placeholder="Выживший" value="${(CR.name||'').replace(/"/g,'')}" oninput="CR.name=this.value">
- <div class="sub">Пол</div><div class="g2"><button class="${CR.sex==='male'?'p':''}" onclick="CR.sex='male';refresh()">Мужчина</button><button class="${CR.sex==='female'?'p':''}" onclick="CR.sex='female';refresh()">Женщина</button></div>
- <div class="sub">Цвет кожи</div><div class="g2">${TONES.map(t=>`<button class="${CR.tone===t[0]?'p':''}" onclick="CR.tone='${t[0]}';refresh()"><span class="sw" style="background:${t[2]}"></span>${t[1]}</button>`).join('')}</div>
- <button class="p" style="width:100%;margin-top:6px" onclick="startGame()">Начать игру</button>`}
+const CR={name:'',sex:'male',style:'base',tone:'tan',traits:[]};
+const crLook=()=>CR.style==='base'?CR.tone:CR.style;
+const crBal=()=>CR.traits.reduce((a,t)=>a+TR[t].v,0);
+function crTrait(id){if(!crCan(id))return;const i=CR.traits.indexOf(id);if(i>=0)CR.traits.splice(i,1);else CR.traits.push(id);haptic();refresh()}
+function crCan(id){const on=CR.traits.includes(id),t=TR[id];if(on)return crBal()-t.v>=0;
+ const pos=CR.traits.filter(x=>TR[x].v<0).length,neg=CR.traits.filter(x=>TR[x].v>0).length;
+ return t.v<0?(pos<3&&crBal()+t.v>=0):neg<3}
+function shCreate(){const styles=['base',...LOOKIDS[CR.sex].filter(x=>!['light','tan','brown','dark'].includes(x))];
+ return `<h3>Создай героя</h3><div class="sub">Имя:</div><input id="nm" maxlength="16" placeholder="Выживший" value="${(CR.name||'').replace(/"/g,'')}" oninput="CR.name=this.value">
+ <div class="sub">Пол</div><div class="g2"><button class="${CR.sex==='male'?'p':''}" onclick="CR.sex='male';CR.style='base';refresh()">Мужчина</button><button class="${CR.sex==='female'?'p':''}" onclick="CR.sex='female';CR.style='base';refresh()">Женщина</button></div>
+ <div class="sub">Внешность</div><div class="g3">${styles.map(id=>`<button class="lk ${CR.style===id?'p':''}" onclick="CR.style='${id}';refresh()"><img src="assets/heroes/hero_${CR.sex}_${id==='base'?CR.tone:id}.png" alt=""><span>${id==='base'?'Классика':LOOKNAME[id]}</span></button>`).join('')}</div>
+ ${CR.style==='base'?`<div class="sub">Цвет кожи</div><div class="g2">${TONES.map(t=>`<button class="${CR.tone===t[0]?'p':''}" onclick="CR.tone='${t[0]}';refresh()"><span class="sw" style="background:${t[2]}"></span>${t[1]}</button>`).join('')}</div>`:''}
+ <div class="sub">Черты характера. Очков: <b>${crBal()}</b>. Сильные стороны покупаются за счёт слабостей (до 3 и 3).</div>
+ ${TRAITS.map(t=>`<div class="it"><div>${t.n}<small>${t.d}</small></div><button class="${CR.traits.includes(t.id)?'p':''}" ${crCan(t.id)?'':'disabled'} onclick="crTrait('${t.id}')">${CR.traits.includes(t.id)?'✓':(t.v>0?'+'+t.v:'−'+(-t.v))}</button></div>`).join('')}
+ <button class="p" style="width:100%;margin-top:8px" onclick="startGame()">Начать игру</button>`}
 function shHome(){return `<h3>🏠 Убежище</h3><div class="sub">Улучшения и сбор ресурсов</div>`+SHELTER.map(b=>`<div class="it"><div>${b.i} ${b.n} <span class="tag">ур.${S.sh[b.id]}/${b.max}</span><small>${b.desc}</small></div><button onclick="openS(shBuilding,'${b.id}')">Открыть</button></div>`).join('')}
-function startGame(){const v=(CR.name||'').trim();S.look=0;S.app={sex:CR.sex,tone:CR.tone};S.name=v||'Выживший';closeSheet();HERO.x=90;HERO.y=262;HERO.tx=90;HERO.ty=262;save();setScene('shelter');haptic()}
+function startGame(){const v=(CR.name||'').trim();S.look=0;S.app={sex:CR.sex,look:crLook()};S.traits=CR.traits.slice();S.name=v||'Выживший';S.fun=80;S.comf=70;S.hp=maxHp();closeSheet();HERO.x=90;HERO.y=262;HERO.tx=90;HERO.ty=262;save();setScene('shelter');haptic()}
 
 /* ============ SCENE CONTROL / HUD ============ */
 function setScene(s){scene=s;closeSheet();
@@ -711,10 +814,10 @@ function setScene(s){scene=s;closeSheet();
  $('hint').textContent=s==='city'?'Тащи карту · тапни здание, чтобы идти в вылазку':'';
  if(s==='city'){cam.x=(WW-VW)/2;cam.y=0}
  updHud()}
-const ic=n=>'<img class="ic" src="assets/icons/icon_'+n+'.png" alt="">';
 function updHud(){const h=$('hud');if(scene==='create'){h.innerHTML='';return}
- h.innerHTML=`<div class="hr"><span>${S.name} · ур.${S.lvl}</span><span>${ic('caps')}${S.caps} &nbsp;${ic('star')}${S.pts}</span></div>
- <div class="hb"><i><u style="width:${S.hp/maxHp()*100}%;background:#e5534b"></u></i><i><u style="width:${S.sat}%;background:#e3b341"></u></i><i><u style="width:${S.thr}%;background:#58a6ff"></u></i><i><u style="width:${S.en}%;background:#7ed957"></u></i></div>
+ const m=moodInfo(),u=(v,c)=>`<i><u style="width:${clamp(v,0,100)}%;background:${c}"></u></i>`;
+ h.innerHTML=`<div class="hr"><span><img class="ic" style="width:16px;height:16px" src="assets/icons/icon_mood_${m.lv}.png" alt=""> ${S.name} · ур.${S.lvl}</span><span>${ic('caps')}${S.caps} &nbsp;${ic('star')}${S.pts}</span></div>
+ <div class="hb">${u(S.hp/maxHp()*100,'#e5534b')}${u(S.sat,'#e3b341')}${u(S.thr,'#58a6ff')}${u(S.en,'#7ed957')}${u(S.fun,'#b88cff')}${u(S.comf,'#e08a3c')}</div>
  <div class="hres">${ic('food')}${S.res.food} ${ic('water')}${S.res.water} ${ic('scrap')}${S.res.scrap} ${ic('medkit')}${S.res.meds} ${ic('parts')}${S.res.parts}</div>`}
 
 /* ============ INPUT ============ */
@@ -742,7 +845,7 @@ function tap(x,y){if(scene==='create'&&!cur){openS(shCreate);return}if(cur)retur
   if(hit==='desk'){walkTo(66,224);return openS(shBuilding,'work')}
   if(hit==='window')return openS(shBuilding,'wall');
   if(hit==='locker'){walkTo(150,240);return openS(shWard)}
-  if(hit==='radiator'||hit==='shelf')return toast(hit==='shelf'?'Скоро: почитать книгу 📖':'Скоро: погреться 🔥')}
+  if(hit==='shelf')return doFun('read');if(hit==='radio')return doFun('radio');if(hit==='radiator')return doFun('warm')}
  else if(scene==='storage'){
   if(hit==='ward')return openS(shWard);if(hit==='rack')return openS(shRack);if(hit==='stock')return openS(shStock);
   if(hit==='char')return openS(shNeeds);if(['poster','rug','lamp','plant'].includes(hit))return openS(shDeco,hit)}}
@@ -752,7 +855,7 @@ let last=performance.now();
 function frame(ts){const dt=Math.min(.05,(ts-last)/1000);last=ts;time+=dt;
  for(const z of SZ){z.x+=z.d*dt*4;if(z.x<4||z.x>170)z.d*=-1}
  updChar(dt);updHero(dt);ctx.setTransform(K,0,0,K,0,0);ctx.imageSmoothingEnabled=false;
- if(scene==='create')drawCreate();else if(scene==='shelter')drawShelter();else if(scene==='hall')drawHall();else if(scene==='storage')drawStorage();else if(scene==='city')drawCity(dt);
+ if(scene==='create')drawCreate();else if(scene==='shelter')drawShelter();else if(scene==='hall')drawHall();else if(scene==='storage')drawStorage();else if(scene==='city')drawCity(dt);else if(scene==='battle')drawBattle(dt);
  drawFX(dt);flushText();requestAnimationFrame(frame)}
 
 load(()=>{offline();CH.y=floorY(0);CH.x=60;if(S.app==null)setScene('create');else setScene('shelter');updHud();requestAnimationFrame(frame)});

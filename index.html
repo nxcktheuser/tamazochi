@@ -252,6 +252,14 @@ function doFun(k){const l=(S.cd[k]||0)+CDMS[k]-Date.now();if(l>0)return toast('�
  else{const g=k==='read'?35:25;S.fun=clamp(S.fun+g,0,100);toast((k==='read'?'Почитал':'Послушал радио')+', настроение +'+g)}
  S.cd[k]=Date.now();haptic();save();refresh()}
 
+/* ============ НОВАЯ ИГРА ============ */
+function wipeSave(cb){try{localStorage.removeItem(SAVE_KEY)}catch(e){}
+ if(TG&&TG.CloudStorage&&TG.isVersionAtLeast&&TG.isVersionAtLeast('6.9')){try{TG.CloudStorage.removeItem(SAVE_KEY,()=>cb&&cb());return}catch(e){}}
+ cb&&cb()}
+function ask(msg,yes){if(TG&&TG.showConfirm&&TG.isVersionAtLeast&&TG.isVersionAtLeast('6.2'))TG.showConfirm(msg,ok=>{if(ok)yes()});else if(confirm(msg))yes()}
+function newGame(){ask('Начать заново? Текущий герой и весь прогресс будут удалены.',()=>wipeSave(()=>location.reload()))}
+const RESET=(()=>{try{if(/[?&]reset\b/.test(location.search)&&!sessionStorage.getItem('wl_reset_done')){sessionStorage.setItem('wl_reset_done','1');return true}}catch(e){}return false})();
+
 /* ============ ПАНЕЛЬ РАЗРАБОТЧИКА (только при ?dev=1) ============ */
 const DEV=(()=>{try{if(/[?&]dev\b/.test(location.search))localStorage.setItem('wl_dev','1');return localStorage.getItem('wl_dev')==='1'}catch(e){return false}})();
 function devDo(a){
@@ -262,7 +270,7 @@ function devDo(a){
  if(a==='sp')S.sp+=3;
  if(a==='cool'){S.cool={};S.cd={}}
  if(a==='gear'){S.gear.weapons=WEAPONS.map(x=>x.id);S.gear.armors=ARMORS.map(x=>x.id)}
- if(a==='reset'){if(confirm('Стереть сохранение и начать заново?')){try{localStorage.removeItem(SAVE_KEY)}catch(e){}location.reload()}return}
+ if(a==='reset'){newGame();return}
  save();refresh();toast('Готово')}
 function shDev(){const b=(a,l)=>`<button onclick="devDo('${a}')">${l}</button>`;
  return `<h3>🛠 Разработчик</h3><div class="sub">Видно только с ?dev=1. Уровень ${S.lvl}, свободных очков навыков ${S.sp}.</div>
@@ -769,6 +777,7 @@ function shNeeds(){const m=moodInfo(),nd=(n,l,v,mx,c)=>bar(ic(n)+' '+l,v,mx,c);
  <button onclick="act('heal')">${ic('medkit')} Лечить (${S.res.meds})</button><button onclick="act('sleep');closeSheet()">${sleeping?'Встать':'Спать'}</button>
  <button onclick="doFun('read')">${ic('fun')} Почитать</button><button onclick="doFun('warm')">${ic('comfort')} Погреться</button></div>
  <button style="width:100%;margin-top:6px" onclick="openS(shSkills)">Навыки${S.sp?' ('+S.sp+')':''}</button>
+ <button style="width:100%;margin-top:6px;opacity:.7" onclick="newGame()">Начать заново</button>
  <div class="sub">Атака ${atk()} · Защита ${def()} · Вылазок: ${S.raids} · Убито: ${S.kills}</div>`}
 function shSkills(){return `<h3>Навыки</h3><div class="sub">Свободных очков: <b>${S.sp}</b>. Очко даётся за каждый новый уровень.</div>`+SKILLS.map(k=>`<div class="it"><div>${k.n} <span class="tag">${S.sk[k.id]}/${SKMAX}</span><small>${k.d}</small></div><button ${S.sp<1||S.sk[k.id]>=SKMAX?'disabled':''} onclick="skUp('${k.id}')">+1</button></div>`).join('')+`<button style="width:100%;margin-top:8px" onclick="openS(shNeeds)">← Герой</button>`}
 function craftList(){
@@ -875,7 +884,8 @@ function frame(ts){const dt=Math.min(.05,(ts-last)/1000);last=ts;time+=dt;
  if(scene==='create')drawCreate();else if(scene==='shelter')drawShelter();else if(scene==='hall')drawHall();else if(scene==='storage')drawStorage();else if(scene==='city')drawCity(dt);else if(scene==='battle')drawBattle(dt);
  drawFX(dt);flushText();requestAnimationFrame(frame)}
 
-load(()=>{offline();CH.y=floorY(0);CH.x=60;if(S.app==null)setScene('create');else setScene('shelter');updHud();requestAnimationFrame(frame)});
+const boot=()=>load(()=>{offline();CH.y=floorY(0);CH.x=60;if(S.app==null)setScene('create');else setScene('shelter');updHud();requestAnimationFrame(frame)});
+if(RESET)wipeSave(boot);else boot();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){offline();S.t=Date.now();updHud()}});
 </script>
 </body>

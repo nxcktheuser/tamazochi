@@ -243,12 +243,13 @@ function flushText(){const k=SC*DPR;tctx.clearRect(0,0,tcv.width,tcv.height);tct
 /* ---- картинки: комната и спрайты героев ---- */
 const IMG={};
 function loadImg(k,src){const i=new Image();i.onload=()=>{IMG[k]=i};i.src=src}
-loadImg('room','assets/rooms/room_personal.webp');loadImg('hall','assets/rooms/room_hall.webp');loadImg('map','assets/maps/city.webp');
+loadImg('room','assets/rooms/room_personal.webp');loadImg('hall','assets/rooms/room_hall.webp');loadImg('storage','assets/rooms/room_storage.webp');loadImg('map','assets/maps/city.webp');
 for(const sx of['female','male'])for(const tn of['light','tan','brown','dark'])loadImg('h_'+sx+'_'+tn,'assets/heroes/hero_'+sx+'_'+tn+'.png');
 const TONES=[['light','Светлый','#f3d2b0'],['tan','Загорелый','#d9a066'],['brown','Коричневый','#a8683a'],['dark','Тёмный','#6b4228']];
 const LOOK0={n:'Выживший',perk:'',jacket:'#6a5a4a',scarf:'#3a3d44',hair:'#4a3020',pack:'#4a4a40',pants:'#4a4f5a',head:'none',hat:'#4a4338'};
 const FLOOR={x0:18,x1:156,y0:214,y1:306},FLOORH={x0:60,x1:158,y0:236,y1:306};
-const curFloor=()=>scene==='hall'?FLOORH:FLOOR;
+const FLOORS={x0:20,x1:160,y0:224,y1:306};
+const curFloor=()=>scene==='hall'?FLOORH:scene==='storage'?FLOORS:FLOOR;
 const HERO={x:90,y:262,tx:90,ty:262,dir:1,walk:false};
 const heroH=y=>54+clamp((y-FLOOR.y0)/(FLOOR.y1-FLOOR.y0),0,1)*22;
 function heroImg(){const a=S.app||{sex:'male',tone:'tan'};return IMG['h_'+a.sex+'_'+a.tone]}
@@ -503,6 +504,12 @@ function drawShelterOld(){
 
 /* --- storage --- */
 function drawStorage(){
+ HS=[];drawRoomBg('storage');
+ glow(91,47,50,'#ff9a3c',.12+.04*Math.sin(time*6)+.03*Math.sin(time*15));
+ hs('ward',0,69,70,145);hs('stock',132,80,48,92);hs('rack',109,171,71,57);
+ drawHero(HERO.x,HERO.y,heroH(HERO.y),HERO.dir,{walk:HERO.walk});
+ const hh=heroH(HERO.y);hs('char',HERO.x-14,HERO.y-hh,28,hh)}
+function drawStorageOld(){
  HS=[];const D=S.deco.st,w=DITEM[D.wall],L=LOOK0;
  R(0,0,VW,VH,w.c);R(0,0,VW,40,dk(w.c,.7));R(0,40,VW,3,dk(w.c,.55));R(0,150,VW,46,dk(w.c,.85));
  for(let x=20;x<VW;x+=30)R(x,43,1,153,dk(w.c,.9));
@@ -696,11 +703,11 @@ function setScene(s){scene=s;closeSheet();
  const bar=$('bar');
  if(s==='shelter')bar.innerHTML='<button onclick="setScene(\'hall\')">🚪 В тамбур</button><button onclick="openS(shHome)">🏠 Убежище</button><button onclick="openS(shNeeds)">🧍 Герой</button>';
  else if(s==='hall')bar.innerHTML='<button onclick="setScene(\'shelter\')">← В комнату</button><button onclick="openS(shNeeds)">🧍 Герой</button>';
- else if(s==='storage')bar.innerHTML='<button onclick="setScene(\'hall\')">← Тамбур</button><button onclick="openS(shDeco)">🎨 Декор</button><button onclick="openS(shNeeds)">🧍 Персонаж</button>';
+ else if(s==='storage')bar.innerHTML='<button onclick="setScene(\'hall\')">← Тамбур</button><button onclick="openS(shNeeds)">🧍 Герой</button>';
  else if(s==='city')bar.innerHTML='<button onclick="setScene(\'hall\')">🏠 Домой</button><button onclick="openS(shNeeds)">🧍 Персонаж</button>';
  else bar.innerHTML='';
  if(s==='create')openS(shCreate);
- if(s==='shelter'||s==='hall'){HERO.x=HERO.tx=s==='hall'?104:90;HERO.y=HERO.ty=262}
+ if(s==='shelter'||s==='hall'||s==='storage'){HERO.x=HERO.tx=s==='hall'?104:90;HERO.y=HERO.ty=262}
  $('hint').textContent=s==='city'?'Тащи карту · тапни здание, чтобы идти в вылазку':'';
  if(s==='city'){cam.x=(WW-VW)/2;cam.y=0}
  updHud()}
@@ -720,7 +727,7 @@ function tap(x,y){if(scene==='create'&&!cur){openS(shCreate);return}if(cur)retur
  if(scene==='city'){if(RA)return;const wx=x+Math.round(cam.x),wy=y+Math.round(cam.y);
   for(const b of POIS)if(Math.abs(wx-b.x)<=14&&wy>=b.y-30&&wy<=b.y+16){if(S.lvl<b.dist.lvl)return toast('Район закрыт: нужен уровень '+b.dist.lvl);return openS(shPOI,b.id)}return}
  let hit=null;for(let i=HS.length-1;i>=0;i--){const h=HS[i];if(x>=h.x&&x<=h.x+h.w&&y>=h.y&&y<=h.y+h.h){hit=h.id;break}}
- if((scene==='shelter'||scene==='hall')&&!sleeping&&!hit&&y>=curFloor().y0-6&&y<=curFloor().y1+4){const F=curFloor();HERO.tx=clamp(x,F.x0,F.x1);HERO.ty=clamp(y,F.y0,F.y1);return}
+ if((scene==='shelter'||scene==='hall'||scene==='storage')&&!sleeping&&!hit&&y>=curFloor().y0-6&&y<=curFloor().y1+4){const F=curFloor();HERO.tx=clamp(x,F.x0,F.x1);HERO.ty=clamp(y,F.y0,F.y1);return}
  if(!hit)return;
  if(scene==='hall'){
   if(hit==='char')return openS(shNeeds);

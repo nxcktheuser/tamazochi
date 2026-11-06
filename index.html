@@ -21,18 +21,25 @@ html,body{margin:0;height:100%;background:#0b0d10;overflow:hidden;touch-action:n
 .hb u{display:block;height:100%}
 .hres{opacity:.9;font-size:10.5px}
 #hint{position:absolute;left:0;right:0;top:64px;text-align:center;font-size:11px;color:#fffa;pointer-events:none;text-shadow:0 1px 2px #000}
-#bar{position:absolute;bottom:0;left:0;right:0;display:flex;gap:6px;padding:8px;background:linear-gradient(#0000,#000c)}
-.btn,button{background:#252d35;color:#e8ecef;border:0;border-radius:10px;padding:10px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+#bar{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;gap:8px;padding:8px 8px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(#0000,#000a);pointer-events:none}
+#bar button{pointer-events:auto}
+.btn,button{background:#1f252a;color:#e8ecef;border:2px solid #353c42;border-radius:6px;padding:9px 12px;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:0 2px 0 #05070a}
 .btn:active,button:active{transform:scale(.97)}
-button.p{background:#7ed957;color:#10200a;font-weight:700}
+button.p{background:#d8a93a;border-color:#f0cf7a;color:#1a1204;font-weight:700}
 button:disabled{opacity:.4}
-#bar button{flex:1;background:#252d35ee;border:1px solid #3a444d}
-#shade{position:absolute;inset:0;background:#0007;display:none;z-index:15}
-#sheet{position:absolute;left:0;right:0;bottom:0;max-height:78%;overflow:auto;background:#1c2228;border-radius:16px 16px 0 0;padding:12px 12px 16px;transform:translateY(105%);transition:transform .22s;z-index:20;font-size:13px;touch-action:pan-y}
-#sheet.open{transform:none}
-#sheet h3{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:6px}
-.sub{color:#8b97a1;font-size:12px;margin-bottom:8px;line-height:1.4}
-.x{position:absolute;right:10px;top:8px;padding:4px 9px;background:#252d35}
+#bar button.nb{flex:0 0 74px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 6px;background:#14181cf0;border:2px solid #3a4046;border-radius:6px;box-shadow:inset 0 0 0 1px #0008,0 3px 0 #05070a;font:700 9.5px/1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#c9cfd3}
+#bar button.nb span{font-size:24px;line-height:1;filter:drop-shadow(0 2px 0 #000a)}
+#bar button.nb:active{transform:translateY(2px);box-shadow:inset 0 0 0 1px #0008,0 1px 0 #05070a}
+#bar button.nb.hot{border-color:#d8a93a;color:#f0cf7a}
+#bar button.nb.dev{flex:0 0 46px;justify-content:center}
+#shade{position:absolute;inset:0;background:#05070acc;display:none;z-index:15}
+#sheet{position:absolute;left:50%;top:50%;width:min(94%,360px);max-height:84%;overflow:auto;background:#12161a;border:2px solid #4a4f46;border-radius:8px;box-shadow:0 0 0 2px #05070a,0 12px 40px #000c,inset 0 0 0 1px #0009;padding:0 12px 14px;transform:translate(-50%,-46%) scale(.94);opacity:0;pointer-events:none;transition:transform .16s ease-out,opacity .16s;z-index:20;font-size:13px;touch-action:pan-y}
+#sheet.open{transform:translate(-50%,-50%);opacity:1;pointer-events:auto}
+#sheet::-webkit-scrollbar{width:0}
+#sheet::before{content:"";display:block;height:8px;margin:0 -12px 10px;background:repeating-linear-gradient(-45deg,#d8a93a 0 8px,#15120a 8px 16px);border-bottom:2px solid #05070a}
+#sheet h3{margin:0 0 6px;padding-right:34px;font:800 15px/1.2 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:6px;color:#f0e6c8}
+.sub{color:#8f9a92;font-size:12px;margin-bottom:8px;line-height:1.4}
+.x{position:sticky;float:right;top:0;margin:-2px -4px 0 0;width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;background:#2a1d18;border-color:#8a4a2a;color:#f0b080;z-index:2}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
 .it{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #252d35}
 .it:last-child{border:0}
@@ -40,17 +47,31 @@ button:disabled{opacity:.4}
 .it button{padding:7px 10px;font-size:12px;white-space:nowrap}
 .tag{font-size:11px;padding:2px 6px;border-radius:6px;background:#252d35;color:#8b97a1;font-weight:400}
 .bar{margin:6px 0}.bar b{display:flex;justify-content:space-between;font-size:12px;color:#8b97a1;font-weight:500;margin-bottom:2px}
-.bar i{display:block;height:8px;background:#252d35;border-radius:5px;overflow:hidden}.bar u{display:block;height:100%}
-.tabs{display:flex;gap:6px;overflow:auto;margin:6px 0}.tabs button{white-space:nowrap;padding:6px 10px;font-size:12px}.tabs button.on{background:#7ed957;color:#10200a}
+.bar i{display:block;height:10px;background:#0b0e11;border:2px solid #2c333a;border-radius:3px;overflow:hidden;position:relative}.bar u{display:block;height:100%}.bar i::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,#0000 0 7px,#0b0e11 7px 9px)}
+.tabs{display:flex;gap:6px;overflow:auto;margin:6px 0}.tabs button{white-space:nowrap;padding:6px 10px;font-size:12px}.tabs button.on{background:#d8a93a;border-color:#f0cf7a;color:#1a1204}
 .sw{display:inline-block;width:14px;height:14px;border-radius:3px;border:1px solid #fff4;vertical-align:-2px;margin-right:6px}
-.log{font-size:12.5px;line-height:1.55;color:#aab4bc}.log .w{color:#7ed957}.log .l{color:#e5534b}.log .y{color:#e3b341}
+.log{font-size:12.5px;line-height:1.55;color:#aab4bc}.log .w{color:#9fc86a}.log .l{color:#e5534b}.log .y{color:#e3b341}
 input{width:100%;background:#252d35;border:1px solid #3a444d;border-radius:8px;color:#fff;padding:9px;font-size:14px;margin:6px 0}
 #hud .hb{gap:3px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
 button.lk{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;font-size:11px}
 button.lk img{height:92px;max-width:100%;object-fit:contain}
-button.lk.p{outline:2px solid #7ed957}
+button.lk.p{outline:2px solid #d8a93a}
 img.ic{width:14px;height:14px;vertical-align:-3px;margin:0 2px 0 0;image-rendering:pixelated;pointer-events:none}
+/* карточка героя */
+.hc{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.pt{flex:0 0 68px;height:68px;border:2px solid #d8a93a;border-radius:6px;background:#0b0e11 center top/cover no-repeat;image-rendering:pixelated;box-shadow:inset 0 0 0 2px #05070a}
+.hc b{display:block;font:800 18px/1.1 -apple-system,Segoe UI,Roboto,sans-serif;color:#f0e6c8}
+.hc .tag{background:#d8a93a;color:#1a1204;font-weight:700}
+.hc .sub{margin:4px 0 0}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 8px}
+.acts button{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 2px 7px;font:700 10px/1.1 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.04em;text-transform:uppercase;background:#171c20}
+.acts button img.ic{width:26px;height:26px}
+.acts button em{position:absolute;top:-6px;right:-4px;min-width:18px;padding:1px 4px;border-radius:9px;background:#d8a93a;color:#1a1204;font:700 10px/14px sans-serif;font-style:normal}
+.acts button:disabled em{background:#555}
+.row2{display:flex;gap:6px}.row2 button{flex:1}
+.foot{display:flex;justify-content:space-between;gap:6px;margin-top:10px;padding-top:8px;border-top:2px solid #232a30;color:#8f9a92;font-size:11px}
+.foot b{color:#e8ecef;font-weight:600}
 #toast{position:absolute;top:92px;left:50%;transform:translateX(-50%);background:#000c;padding:7px 13px;border-radius:10px;font-size:12px;z-index:30;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
 </style>
@@ -831,16 +852,14 @@ function closeSheet(){cur=null;$('sheet').classList.remove('open');$('shade').st
 function refresh(){updHud();if(cur){const sc=$('sheet').scrollTop;$('sheet').innerHTML='<button class="x" onclick="closeSheet()">✕</button>'+cur.fn(...cur.a);$('sheet').scrollTop=sc}}
 const bar=(l,v,m,c)=>`<div class="bar"><b><span>${l}</span><span>${Math.round(v)}/${m}</span></b><i><u style="width:${clamp(v/m*100,0,100)}%;background:${c}"></u></i></div>`;
 
-function shNeeds(){const m=moodInfo(),nd=(n,l,v,mx,c)=>bar(ic(n)+' '+l,v,mx,c);
- return `<h3><img class="ic" style="width:22px;height:22px" src="assets/icons/icon_mood_${m.lv}.png" alt=""> ${S.name} <span class="tag">ур.${S.lvl}</span></h3>
- <div class="sub">Настроение: <b>${m.txt}</b>${S.traits.length?'<br>Черты: '+S.traits.map(t=>TR[t].n).join(', '):''}</div>
- ${nd('health','Здоровье',S.hp,maxHp(),'#e5534b')}${nd('hunger','Сытость',S.sat,100,'#e3b341')}${nd('thirst','Жажда',S.thr,100,'#58a6ff')}${nd('energy','Энергия',S.en,100,'#7ed957')}${nd('fun','Развлечение',S.fun,100,'#b88cff')}${nd('comfort','Комфорт',S.comf,100,'#e08a3c')}${nd('star','Опыт',S.xp,S.lvl*30,'#d8b04a')}
- <div class="g2"><button onclick="act('feed')">${ic('food')} Покормить (${S.res.food})</button><button onclick="act('drink')">${ic('water')} Напоить (${S.res.water})</button>
- <button onclick="act('heal')">${ic('medkit')} Лечить (${S.res.meds})</button><button onclick="act('sleep');closeSheet()">${sleeping?'Встать':'Спать'}</button>
- <button onclick="doFun('read')">${ic('fun')} Почитать</button><button onclick="doFun('warm')">${ic('comfort')} Погреться</button></div>
- <button style="width:100%;margin-top:6px" onclick="openS(shSkills)">Навыки${S.sp?' ('+S.sp+')':''}</button>
- <button style="width:100%;margin-top:6px;opacity:.7" onclick="newGame()">Начать заново</button>
- <div class="sub">Атака ${atk()} · Защита ${def()} · Вылазок: ${S.raids} · Убито: ${S.kills}</div>`}
+function shNeeds(){const m=moodInfo(),nd=(n,l,v,mx,c)=>bar(ic(n)+' '+l,v,mx,c),hi=heroImg(),act=(f,i,l,n,dis)=>`<button ${dis?'disabled':''} onclick="${f}">${ic(i)}${l}${n!=null?`<em>${n}</em>`:''}</button>`;
+ return `<div class="hc"><div class="pt" style="background-image:url(${hi?hi.src:''})"></div><div><b>${S.name}</b><span class="tag">ур.${S.lvl}</span><div class="sub"><img class="ic" src="assets/icons/icon_mood_${m.lv}.png" alt=""> ${m.txt}${S.traits.length?'<br>'+S.traits.map(t=>TR[t].n).join(' · '):''}</div></div></div>
+ ${nd('health','Здоровье',S.hp,maxHp(),'#c2453d')}${nd('hunger','Сытость',S.sat,100,'#d8a93a')}${nd('thirst','Жажда',S.thr,100,'#4f9fc9')}${nd('energy','Энергия',S.en,100,'#8fae4a')}${nd('fun','Развлечение',S.fun,100,'#9a7bc2')}${nd('comfort','Комфорт',S.comf,100,'#c8782f')}${nd('star','Опыт',S.xp,S.lvl*30,'#d8b04a')}
+ <div class="acts">${act("act('feed')",'food','Еда',S.res.food)}${act("act('drink')",'water','Вода',S.res.water)}${act("act('heal')",'medkit','Лечить',S.res.meds)}
+ <button onclick="act('sleep');closeSheet()"><span style="font-size:24px;line-height:26px">${sleeping?'⏰':'😴'}</span>${sleeping?'Встать':'Спать'}</button>${act("doFun('read')",'fun','Читать')}${act("doFun('warm')",'comfort','Греться')}</div>
+ <div class="row2"><button class="${S.sp?'p':''}" onclick="openS(shSkills)">Навыки${S.sp?' ('+S.sp+')':''}</button></div>
+ <div class="foot"><span>Атака <b>${atk()}</b> · Защита <b>${def()}</b></span><span>Вылазок <b>${S.raids}</b> · Убито <b>${S.kills}</b></span></div>
+ <button style="width:100%;margin-top:8px;opacity:.55;font-size:11px;padding:6px" onclick="newGame()">Начать заново</button>`}
 function shSkills(){return `<h3>Навыки</h3><div class="sub">Свободных очков: <b>${S.sp}</b>. Очко даётся за каждый новый уровень.</div>`+SKILLS.map(k=>`<div class="it"><div>${k.n} <span class="tag">${S.sk[k.id]}/${SKMAX}</span><small>${k.d}</small></div><button ${S.sp<1||S.sk[k.id]>=SKMAX?'disabled':''} onclick="skUp('${k.id}')">+1</button></div>`).join('')+`<button style="width:100%;margin-top:8px" onclick="openS(shNeeds)">← Герой</button>`}
 function craftList(){
  const l=[...WEAPONS.map(x=>['w',x]),...ARMORS.map(x=>['a',x])].filter(([k,x])=>x.t>0&&x.t<=S.sh.work+1&&!(k==='w'?S.gear.weapons:S.gear.armors).includes(x.id));
@@ -890,15 +909,16 @@ function shHome(){return `<h3>🏠 Убежище</h3><div class="sub">Улуч�
 function startGame(){const v=(CR.name||'').trim();S.look=0;S.app={sex:CR.sex,look:crLook()};S.traits=CR.traits.slice();S.name=v||'Выживший';S.fun=80;S.comf=70;S.hp=maxHp();closeSheet();HERO.x=90;HERO.y=262;HERO.tx=90;HERO.ty=262;save();setScene('shelter');haptic()}
 
 /* ============ SCENE CONTROL / HUD ============ */
+const NB=(l,i,o,c='')=>`<button class="nb${c}" onclick="${o}"><span>${i}</span>${l}</button>`;
 function setScene(s){scene=s;closeSheet();
  const bar=$('bar');
- if(s==='shelter')bar.innerHTML='<button onclick="setScene(\'hall\')">🚪 В тамбур</button><button onclick="openS(shHome)">🏠 Убежище</button><button onclick="openS(shNeeds)">🧍 Герой</button>';
- else if(s==='hall')bar.innerHTML='<button onclick="setScene(\'shelter\')">← В комнату</button><button onclick="openS(shNeeds)">🧍 Герой</button>';
- else if(s==='storage')bar.innerHTML='<button onclick="setScene(\'hall\')">← Тамбур</button><button onclick="openS(shNeeds)">🧍 Герой</button>';
- else if(s==='city')bar.innerHTML='<button onclick="setScene(\'hall\')">🏠 Домой</button><button onclick="openS(shNeeds)">🧍 Персонаж</button>';
+ if(s==='shelter')bar.innerHTML=NB('Тамбур','🚪',"setScene('hall')")+NB('Убежище','🏠','openS(shHome)')+NB('Герой','🧍','openS(shNeeds)',' hot');
+ else if(s==='hall')bar.innerHTML=NB('Комната','⬅️',"setScene('shelter')")+NB('Герой','🧍','openS(shNeeds)',' hot');
+ else if(s==='storage')bar.innerHTML=NB('Тамбур','⬅️',"setScene('hall')")+NB('Герой','🧍','openS(shNeeds)',' hot');
+ else if(s==='city')bar.innerHTML=NB('Домой','🏠',"setScene('hall')")+NB('Герой','🧍','openS(shNeeds)',' hot');
  else bar.innerHTML='';
  if(s==='create')openS(shCreate);
- if(DEV&&['shelter','hall','storage','city'].includes(s))bar.insertAdjacentHTML('beforeend','<button onclick="openS(shDev)" style="flex:0 0 46px">🛠</button>');
+ if(DEV&&['shelter','hall','storage','city'].includes(s))bar.insertAdjacentHTML('beforeend','<button class="nb dev" onclick="openS(shDev)"><span>🛠</span></button>');
  if(s==='shelter'||s==='hall'||s==='storage'){HERO.x=HERO.tx=s==='hall'?104:90;HERO.y=HERO.ty=262}
  $('hint').textContent=s==='city'?'Тащи карту · тапни здание, чтобы идти в вылазку':'';
  if(s==='city'){cam.x=(WW-VW)/2;cam.y=0}

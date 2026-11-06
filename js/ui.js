@@ -78,8 +78,8 @@ function setScene(s){scene=s;closeSheet();
  if(s==='city'){cam.x=(WW-VW)/2;cam.y=0}
  updHud()}
 function updHud(){const h=$('hud');if(scene==='create'){h.innerHTML='';return}
- const m=moodInfo(),u=(v,c)=>`<i><u style="width:${clamp(v,0,100)}%;background:${c}"></u></i>`;
- h.innerHTML=`<div class="hr"><span><img class="ic" style="width:16px;height:16px" src="assets/icons/icon_mood_${m.lv}.png" alt=""> ${S.name} · ур.${S.lvl}</span><span>${ic('caps')}${S.caps} &nbsp;${ic('star')}${S.pts}</span></div>
- <div class="hb">${u(S.hp/maxHp()*100,'#e5534b')}${u(S.sat,'#e3b341')}${u(S.thr,'#58a6ff')}${u(S.en,'#7ed957')}${u(S.fun,'#b88cff')}${u(S.comf,'#e08a3c')}</div>
- <div class="hres">${ic('food')}${S.res.food} ${ic('water')}${S.res.water} ${ic('scrap')}${S.res.scrap} ${ic('medkit')}${S.res.meds} ${ic('parts')}${S.res.parts}</div>`}
+ const m=moodInfo(),hi=heroImg(),cell=(n,v,c)=>`<div class="hc2">${ic(n)}<i><u style="width:${clamp(v,0,100)}%;background:${c}"></u></i></div>`,chip=(n,v)=>`<span class="chip">${ic(n)}${v}</span>`;
+ h.innerHTML=`<div class="hr"><span class="who"><span class="mini" style="background-image:url(${hi?hi.src:''})"></span><b>${S.name}</b><em>${S.lvl}</em><img class="ic" src="assets/icons/icon_mood_${m.lv}.png" alt=""></span><span class="money">${chip('caps',S.caps)}${chip('star',S.pts)}</span></div>
+ <div class="hb">${cell('health',S.hp/maxHp()*100,'#c2453d')}${cell('hunger',S.sat,'#d8a93a')}${cell('thirst',S.thr,'#4f9fc9')}${cell('energy',S.en,'#8fae4a')}${cell('fun',S.fun,'#9a7bc2')}${cell('comfort',S.comf,'#c8782f')}</div>
+ <div class="hres">${chip('food',S.res.food)}${chip('water',S.res.water)}${chip('scrap',S.res.scrap)}${chip('medkit',S.res.meds)}${chip('parts',S.res.parts||0)}</div>`}
 

@@ -104,21 +104,21 @@ const SHELTER=[
  {id:'wall',n:'Стена',i:'🧱',desc:'Каждый уровень даёт +1 к защите в вылазках',base:{scrap:20,parts:2},max:5},
 ];
 const DISTRICTS=[
- {id:'sub',n:'Окраина',lvl:1,y0:0,y1:155,b:[
-  {id:'garage',n:'Гараж',k:'garage',x:62,y:70,d:1,e:10,loot:{scrap:[2,5],parts:[0,1]},gt:1},
-  {id:'shop',n:'Магазинчик',k:'shop',x:225,y:62,d:2,e:12,loot:{food:[2,5],water:[1,4]},gt:1},
-  {id:'pharm',n:'Аптека',k:'pharm',x:60,y:122,d:3,e:14,loot:{meds:[1,3],water:[0,2]},gt:2}]},
- {id:'cen',n:'Центр',lvl:3,y0:155,y1:332,b:[
-  {id:'mart',n:'Супермаркет',k:'mart',x:62,y:210,d:4,e:16,loot:{food:[5,10],water:[4,8]},gt:2},
-  {id:'police',n:'Участок',k:'police',x:200,y:250,d:5,e:18,loot:{scrap:[3,6],parts:[1,3]},gt:3},
-  {id:'hosp',n:'Больница',k:'hosp',x:105,y:292,d:6,e:20,loot:{meds:[3,6],parts:[1,2]},gt:3}]},
- {id:'ind',n:'Промзона',lvl:5,y0:332,y1:460,b:[
-  {id:'ware',n:'Склад',k:'ware',x:40,y:385,d:7,e:22,loot:{scrap:[8,14],parts:[2,4]},gt:3},
-  {id:'fact',n:'Завод',k:'fact',x:200,y:385,d:9,e:25,loot:{scrap:[10,18],parts:[3,6]},gt:4},
-  {id:'base',n:'Воен. база',k:'base',x:250,y:435,d:11,e:30,loot:{meds:[3,6],parts:[4,8],scrap:[8,12]},gt:4}]},
+ {id:'sub',n:'Окраина',lvl:1,y0:0,y1:143,b:[
+  {id:'garage',n:'Гараж',k:'garage',x:201,y:46,d:1,e:10,loot:{scrap:[2,5],parts:[0,1]},gt:1},
+  {id:'shop',n:'Магазинчик',k:'shop',x:90,y:121,d:2,e:12,loot:{food:[2,5],water:[1,4]},gt:1},
+  {id:'pharm',n:'Аптека',k:'pharm',x:179,y:121,d:3,e:14,loot:{meds:[1,3],water:[0,2]},gt:2}]},
+ {id:'cen',n:'Центр',lvl:3,y0:143,y1:334,b:[
+  {id:'mart',n:'Супермаркет',k:'mart',x:70,y:232,d:4,e:16,loot:{food:[5,10],water:[4,8]},gt:2},
+  {id:'police',n:'Участок',k:'police',x:73,y:314,d:5,e:18,loot:{scrap:[3,6],parts:[1,3]},gt:3},
+  {id:'hosp',n:'Больница',k:'hosp',x:201,y:238,d:6,e:20,loot:{meds:[3,6],parts:[1,2]},gt:3}]},
+ {id:'ind',n:'Промзона',lvl:5,y0:334,y1:484,b:[
+  {id:'ware',n:'Склад',k:'ware',x:56,y:411,d:7,e:22,loot:{scrap:[8,14],parts:[2,4]},gt:3},
+  {id:'fact',n:'Завод',k:'fact',x:218,y:416,d:9,e:25,loot:{scrap:[10,18],parts:[3,6]},gt:4},
+  {id:'base',n:'Воен. база',k:'base',x:218,y:469,d:11,e:30,loot:{meds:[3,6],parts:[4,8],scrap:[8,12]},gt:4}]},
 ];
 const POIS=[];DISTRICTS.forEach(d=>d.b.forEach(b=>{b.dist=d;POIS.push(b)}));
-const HOME={x:118,y:18};
+const HOME={x:135,y:26};
 
 const DECO={
  wall:{n:'Стены',items:[{id:'w0',n:'Бетон',c:'#3c4249',caps:0,pts:0},{id:'w1',n:'Кирпич',c:'#6b3f36',caps:25,pts:10},{id:'w2',n:'Хвоя',c:'#2f4a3c',caps:25,pts:10},{id:'w3',n:'Ночь',c:'#2d3e57',caps:40,pts:20},{id:'w4',n:'Охра',c:'#7a6a3a',caps:40,pts:20}]},
@@ -218,7 +218,7 @@ function doRaid(b){
  save();return log}
 
 /* ============ CANVAS ============ */
-const VW=180,VH=320,WW=300,WH=460;
+const VW=180,VH=320,WW=270,WH=484;
 const cv=$('game'),ctx=cv.getContext('2d');
 let SC=2,K=3;
 /* Текст рисуется на отдельном холсте в родном разрешении экрана, поэтому буквы чёткие */
@@ -236,14 +236,14 @@ function T(s,x,y,c,sz,al){TQ.push({s,x,y,c:c||'#fff',sz:sz||6,al:al||'left'})}
 function flushText(){const k=SC*DPR;tctx.clearRect(0,0,tcv.width,tcv.height);tctx.textBaseline='top';tctx.lineJoin='round';
  for(const q of TQ){tctx.font='700 '+Math.round(q.sz*1.2*k)+'px '+TFONT;tctx.textAlign=q.al;
   const px=Math.round(q.x*k),py=Math.round((q.y-1)*k);
-  if(q.c!=='#222'){tctx.lineWidth=Math.max(2,Math.round(1.4*k));tctx.strokeStyle='#000';tctx.strokeText(q.s,px,py)}
+  if(q.c!=='#222'){tctx.lineWidth=Math.max(2,Math.round(.8*k));tctx.strokeStyle='#000';tctx.strokeText(q.s,px,py)}
   tctx.fillStyle=q.c;tctx.fillText(q.s,px,py)}
  TQ=[]}
 
 /* ---- картинки: комната и спрайты героев ---- */
 const IMG={};
 function loadImg(k,src){const i=new Image();i.onload=()=>{IMG[k]=i};i.src=src}
-loadImg('room','assets/rooms/room_personal.webp');loadImg('hall','assets/rooms/room_hall.webp');
+loadImg('room','assets/rooms/room_personal.webp');loadImg('hall','assets/rooms/room_hall.webp');loadImg('map','assets/maps/city.webp');
 for(const sx of['female','male'])for(const tn of['light','tan','brown','dark'])loadImg('h_'+sx+'_'+tn,'assets/heroes/hero_'+sx+'_'+tn+'.png');
 const TONES=[['light','Светлый','#f3d2b0'],['tan','Загорелый','#d9a066'],['brown','Коричневый','#a8683a'],['dark','Тёмный','#6b4228']];
 const LOOK0={n:'Выживший',perk:'',jacket:'#6a5a4a',scarf:'#3a3d44',hair:'#4a3020',pack:'#4a4a40',pants:'#4a4f5a',head:'none',hat:'#4a4338'};
@@ -629,9 +629,8 @@ function drawCity(dt){
  cam.x=clamp(cam.x,0,WW-VW);cam.y=clamp(cam.y,0,WH-VH);
  const cx=Math.round(cam.x),cy=Math.round(cam.y);
  ctx.save();if(shake>0){ctx.translate(rnd(-1,1),rnd(-1,1));shake-=dt}
- ctx.drawImage(cityCv,cx,cy,VW,VH,0,0,VW,VH);
- // zombies
- for(const z of ZS){z.x+=z.dx*dt*3;if(z.x<2||z.x>WW-8)z.dx*=-1;const sx=z.x-cx,sy=z.y-cy;if(sx>-8&&sx<VW+8&&sy>-8&&sy<VH+8)drawZ(Math.round(sx),Math.round(sy),time+z.ph,z.dx)}
+ if(IMG.map){ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(IMG.map,-cx,-cy,WW,WH);ctx.restore()}
+ else{R(0,0,VW,VH,'#1b1814');T('Загрузка карты…',90,150,'#aaa',7,'center')}
  // home
  {const hx=HOME.x-cx,hy=HOME.y-cy;R(hx-9,hy-6,18,12,'#2a2c32');R(hx-7,hy-4,14,10,'#5a5e66');R(hx-1,hy-4,2,10,'#1a1a1e');T('ДОМ',hx,hy-15,'#7ed957',6,'center')}
  // pins + labels
@@ -703,7 +702,7 @@ function setScene(s){scene=s;closeSheet();
  if(s==='create')openS(shCreate);
  if(s==='shelter'||s==='hall'){HERO.x=HERO.tx=s==='hall'?104:90;HERO.y=HERO.ty=262}
  $('hint').textContent=s==='city'?'Тащи карту · тапни здание, чтобы идти в вылазку':'';
- if(s==='city'){if(!cityCv)buildCity();cam.x=60;cam.y=0}
+ if(s==='city'){cam.x=(WW-VW)/2;cam.y=0}
  updHud()}
 const ic=n=>'<img class="ic" src="assets/icons/icon_'+n+'.png" alt="">';
 function updHud(){const h=$('hud');if(scene==='create'){h.innerHTML='';return}

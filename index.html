@@ -172,8 +172,8 @@ function fresh(){const n=Date.now();return{
  deco:{sh:DEF_DECO(),st:DEF_DECO()},
  owned:['w0','f0','p0','r0','l0','n0'],
  raids:0,kills:0,
- traits:[],sk:{scout:0,medic:0,mech:0,stalker:0,garden:0,wolf:0},sp:0,fun:80,comf:70,cd:{},cool:{}}}
-let S=fresh(),sleeping=false;
+ traits:[],sk:{scout:0,medic:0,mech:0,stalker:0,garden:0,wolf:0},sp:0,fun:80,comf:70,cd:{},cool:{},sleeping:false}}
+let S=fresh(),sleeping=false,loading=true;
 const hasT=id=>S.traits.includes(id);
 const maxHp=()=>100+(S.lvl-1)*10-(hasT('frail')?20:0);
 const WP=()=>WEAPONS.find(x=>x.id===S.gear.w);
@@ -181,18 +181,18 @@ const AR=()=>ARMORS.find(x=>x.id===S.gear.a);
 const atk=()=>WP().atk+S.lvl+(hasT('strong')?2:0)+(hasT('stubborn')?1:0)+S.sk.wolf;
 const def=()=>AR().def+S.sh.wall+S.sk.stalker;
 
-function save(){S.t=Date.now();const s=JSON.stringify(S);try{localStorage.setItem(SAVE_KEY,s)}catch(e){}
+function save(){if(loading)return;S.t=Date.now();if(FB)S.fight=FB;const s=JSON.stringify(S);try{localStorage.setItem(SAVE_KEY,s)}catch(e){}
  if(TG&&TG.CloudStorage&&TG.isVersionAtLeast&&TG.isVersionAtLeast('6.9')){try{TG.CloudStorage.setItem(SAVE_KEY,s)}catch(e){}}}
 function load(cb){let local=null;try{local=JSON.parse(localStorage.getItem(SAVE_KEY))}catch(e){}
- const fin=cloud=>{let b=local;if(cloud&&(!b||cloud.t>b.t))b=cloud;if(b){S=Object.assign(fresh(),b);S.deco=Object.assign({sh:DEF_DECO(),st:DEF_DECO()},b.deco||{});if(S.look!=null&&!S.app)S.app={sex:'male',tone:'tan'};if(S.app&&!S.app.look)S.app.look=S.app.tone||'tan';S.sk=Object.assign(fresh().sk,b.sk||{});S.traits=b.traits||[];S.cd=b.cd||{};S.cool=b.cool||{}}cb()};
- if(TG&&TG.CloudStorage&&TG.isVersionAtLeast&&TG.isVersionAtLeast('6.9')){try{TG.CloudStorage.getItem(SAVE_KEY,(e,v)=>{let c=null;try{c=JSON.parse(v)}catch(x){}fin(c)});return}catch(e){}}
- fin(null)}
+ const fin=cloud=>{let b=local;if(cloud&&(!b||cloud.t>b.t))b=cloud;if(b){S=Object.assign(fresh(),b);if(b.fight&&b.fight.end==null)FB=b.fight;else FB=null;S.deco=Object.assign({sh:DEF_DECO(),st:DEF_DECO()},b.deco||{});if(S.look!=null&&!S.app)S.app={sex:'male',tone:'tan'};if(S.app&&!S.app.look)S.app.look=S.app.tone||'tan';S.sk=Object.assign(fresh().sk,b.sk||{});S.traits=b.traits||[];S.cd=b.cd||{};S.cool=b.cool||{}}cb()};
+ if(TG&&TG.CloudStorage&&TG.isVersionAtLeast&&TG.isVersionAtLeast('6.9')){try{TG.CloudStorage.getItem(SAVE_KEY,(e,v)=>{let c=null;try{c=JSON.parse(v)}catch(x){}fin(c);loading=false});return}catch(e){}}
+ loading=false;fin(null)}
 
-function tick(m){if(m<=0)return;
+function tick(m){if(m<=0||loading)return;
  const hung=(hasT('glutton')?1.4:1)*(hasT('hardy')?.7:1);
- if(sleeping){S.en=clamp(S.en+m*(2+S.sh.bunk*.8)*(hasT('sleeper')?1.4:1),0,100);S.sat=clamp(S.sat-m*.08*hung,0,100);S.thr=clamp(S.thr-m*.1*hung,0,100);S.comf=clamp(S.comf+m*.4,0,100);if(S.en>=100){sleeping=false;toast('Выспался')}}
+ if(S.sleeping){S.en=clamp(S.en+m*(2+S.sh.bunk*.8)*(hasT('sleeper')?1.4:1),0,100);S.sat=clamp(S.sat-m*.08*hung,0,100);S.thr=clamp(S.thr-m*.1*hung,0,100);S.comf=clamp(S.comf+m*.4,0,100);if(S.en>=100){S.sleeping=false;toast('Выспался')}}
  else{S.sat=clamp(S.sat-m*.15*hung,0,100);S.thr=clamp(S.thr-m*.2*hung,0,100);S.en=clamp(S.en+m*.05,0,100);S.fun=clamp(S.fun-m*.12,0,100);S.comf=clamp(S.comf-m*.1*(hasT('smoker')?1.5:1),0,100)}
- if(S.sat<=0||S.thr<=0)S.hp=clamp(S.hp-m*.5,0,maxHp());else if(S.sat>40&&S.thr>40)S.hp=clamp(S.hp+m*.1,0,maxHp())}
+ if(S.sat<=0||S.thr<=0)S.hp=clamp(S.hp-m*.08,0,maxHp());else if(S.sat>40&&S.thr>40)S.hp=clamp(S.hp+m*.1,0,maxHp())}
 function offline(){tick(Math.min((Date.now()-S.t)/60000,480))}
 setInterval(()=>{tick(5/60);save();updHud()},5000);
 
@@ -208,11 +208,11 @@ function upg(id){const b=SHELTER.find(x=>x.id===id),c=shCost(b);if(!canPay(c)||S
  for(const k of['food','water','scrap']){const n=pend(k);if(n>0){S.res[k]+=n}S.col[k]=Date.now()}
  pay(c);S.sh[id]++;haptic();toast(b.n+' → ур.'+S.sh[id]);save();refresh()}
 function act(a){haptic();
- if(S.hp<=0&&a!=='heal')return toast('Сначала аптечка 💊');
+ if(S.hp<=0&&a!=='heal'&&a!=='feed'&&a!=='drink')return toast('Сначала аптечка 💊');
  if(a==='feed'){if(S.res.food<1)return toast('Нет еды');S.res.food--;S.sat=clamp(S.sat+25,0,100)}
  if(a==='drink'){if(S.res.water<1)return toast('Нет воды');S.res.water--;S.thr=clamp(S.thr+30,0,100)}
  if(a==='heal'){if(S.res.meds<1)return toast('Нет аптечек');S.res.meds--;S.hp=clamp(S.hp+40+10*S.sk.medic,1,maxHp())}
- if(a==='sleep'){sleeping=!sleeping;if(sleeping){CH.floor=0;CH.y=floorY(0);CH.path=[];if(scene!=='shelter')setScene('shelter')}else{CH.x=100}}
+ if(a==='sleep'){S.sleeping=!S.sleeping;if(S.sleeping){CH.floor=0;CH.y=floorY(0);CH.path=[];if(scene!=='shelter')setScene('shelter')}else{CH.x=100}}
  save();refresh()}
 function equip(k,id){if(k==='w')S.gear.w=id;else S.gear.a=id;haptic();save();refresh()}
 function craftCost(x){return{scrap:x.t*12,parts:x.t*3}}
@@ -284,7 +284,7 @@ const RESET=(()=>{try{if(/[?&]reset\b/.test(location.search)&&!sessionStorage.ge
 /* ============ ПАНЕЛЬ РАЗРАБОТЧИКА (только при ?dev=1) ============ */
 const DEV=(()=>{try{if(location.protocol==='file:')return true;if(/[?&]dev\b/.test(location.search))localStorage.setItem('wl_dev','1');return localStorage.getItem('wl_dev')==='1'}catch(e){return false}})();
 function devDo(a){
- if(a==='needs'){S.hp=maxHp();S.sat=S.thr=S.en=S.fun=S.comf=100;sleeping=false}
+ if(a==='needs'){S.hp=maxHp();S.sat=S.thr=S.en=S.fun=S.comf=100;S.sleeping=false}
  if(a==='lvl6')S.lvl=Math.max(S.lvl,6);
  if(a==='lvlup'){S.lvl++;S.sp++}
  if(a==='res'){for(const k in S.res)S.res[k]+=20;S.caps+=200;S.pts+=100}
@@ -301,13 +301,13 @@ function shDev(){const b=(a,l)=>`<button onclick="devDo('${a}')">${l}</button>`;
 function doRaid(b,o){o=o||{};
  S.en-=raidCost(b);S.raids++;S.cool[b.id]=Date.now()+RESPAWN_MS;
  const log=[`<b>${b.n}</b> · настроение: ${moodInfo().txt}`];
- const zc=o.out?o.out.zs.length:b.d+rnd(1,3),mood=moodInfo().lv,pool=zPool(b),zs=o.out?o.out.zs:Array.from({length:zc},()=>pool[rnd(0,pool.length-1)]),lm=(mood==='cheerful'?1.15:mood==='grumpy'?.85:1)*(hasT('lucky')?1.2:1)*(o.quick?.7:1)*(o.out&&o.out.retreat?.4:1);let hp=o.out?o.out.hp:S.hp,dead=o.out?o.out.dead:false,kills=o.out?o.out.kills:0;
+ const zc=o.out?o.out.zs.length:b.d+rnd(1,3),mood=moodInfo().lv,pool=zPool(b),zs=o.out?o.out.zs:Array.from({length:zc},()=>pool[rnd(0,pool.length-1)]),lm=(mood==='cheerful'?1.15:mood==='grumpy'?.85:1)*(hasT('lucky')?1.2:1)*(o.quick?.7:1)*(o.out&&o.out.retreat?.6:1);let hp=o.out?o.out.hp:S.hp,dead=o.out?o.out.dead:false,kills=o.out?o.out.kills:0;
  if(!o.out)for(let z=0;z<zc&&!dead;z++){let zh=4+b.d*2;
   while(zh>0&&hp>0){zh-=atk()+rnd(0,3);if(zh>0)hp-=Math.max(1,b.d+rnd(0,2)-def()+(mood==='grumpy'?1:0))}
   if(hp>0)kills++;else dead=true}
  S.kills+=kills;const dmg=S.hp-Math.max(hp,0);S.hp=Math.max(hp,0);LASTRAID={zc,zs,kills,dead};
  log.push(`Убито: ${kills}/${zc} · урон −${Math.round(dmg)} HP`);
- if(o.out&&o.out.retreat)log.push('Отступил: добыча урезана до 40%');if(o.quick)log.push('Быстрая вылазка: добыча −30%');
+ if(o.out&&o.out.retreat)log.push('Отступил: добыча урезана до 60%');if(o.quick)log.push('Быстрая вылазка: добыча −30%');
  if(dead){S.hp=1;log.push('<span class="l">💀 Тебя чуть не прикончили. Еле дополз домой, добыча потеряна.</span>')}
  else{
   const got=[];
@@ -377,7 +377,7 @@ function drawSprite(im,x,y,h,dir,o){o=o||{};if(!im)return;const w=h*im.width/im.
  ctx.globalAlpha=o.alpha==null?1:o.alpha;ctx.translate(x,y);if(dir<0)ctx.scale(-1,1);ctx.drawImage(im,-w/2,-h,w,h);ctx.restore()}
 const zH=(z,hh)=>IMG['z_'+z]?IMG['z_'+z].height/508*hh:hh;
 function needName(){const hpP=S.hp/maxHp()*100,c=[['health',hpP],['hunger',S.sat],['thirst',S.thr],['energy',S.en],['fun',S.fun],['comfort',S.comf]].sort((a,b)=>a[1]-b[1])[0];return c[1]<30?c[0]:null}
-function drawBubble(x,y){if(sleeping)return;const n=needName(),im=n&&IMG['i_'+n];if(!im)return;const bob=Math.sin(time*4)*1;
+function drawBubble(x,y){if(S.sleeping)return;const n=needName(),im=n&&IMG['i_'+n];if(!im)return;const bob=Math.sin(time*4)*1;
  ctx.save();ctx.fillStyle='rgba(255,255,255,.93)';ctx.beginPath();ctx.ellipse(x,y-9+bob,8.5,8,0,0,7);ctx.fill();ctx.fillRect(x-1.5,y-3+bob,3,4);
  ctx.imageSmoothingEnabled=true;ctx.drawImage(im,x-6,y-15+bob,12,12);ctx.restore()}
 function glow(x,y,r,col,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');
@@ -598,7 +598,7 @@ function drawShelter(){
  glow(36,130,46,'#ff9a3c',.14+.05*Math.sin(time*7)+.03*Math.sin(time*17));
  hs('shelf',0,70,42,54);hs('desk',0,122,60,80);hs('radio',8,136,24,22);hs('window',70,63,45,30);hs('radiator',73,128,40,30);
  hs('locker',130,85,28,56);hs('locker',160,104,20,120);hs('bunk',115,135,48,78);
- if(sleeping){ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(0,0,VW,VH);
+ if(S.sleeping){ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(0,0,VW,VH);
   T('Z',140,120-Math.sin(time*2)*2,'#fff',9);T('z',132,130-Math.sin(time*2+1)*2,'#fff',7);return}
  drawHero(HERO.x,HERO.y,heroH(HERO.y),HERO.dir,{walk:HERO.walk});drawBubble(HERO.x,HERO.y-heroH(HERO.y)-2);
  const hh=heroH(HERO.y);hs('char',HERO.x-14,HERO.y-hh,28,hh)}
@@ -614,7 +614,7 @@ function drawShelterOld(){
  drawLiving();drawFarm();drawWork();
  // character
  const L=LOOK0;
- if(sleeping){
+ if(S.sleeping){
   const bx=114,feet=136,blank=['#6b6b6b','#8a4a3a','#3a6a8a','#6a4a8a','#8a6a3a','#9a3a4a'][S.sh.bunk];
   ctx.save();ctx.translate(bx+3,feet-(S.sh.bunk?21:11));ctx.rotate(-Math.PI/2);drawChar(0,0,L,{t:time,noShadow:true,a:S.gear.a});ctx.restore();
   R(bx+14,feet-(S.sh.bunk?21:11)-2,34,S.sh.bunk?5:4,blank);
@@ -939,7 +939,7 @@ function tap(x,y){if(scene==='create'&&!cur){openS(shCreate);return}if(cur)retur
  if(scene==='city'){if(RA)return;const wx=x+Math.round(cam.x),wy=y+Math.round(cam.y);
   for(const b of POIS)if(Math.abs(wx-b.x)<=14&&wy>=b.y-30&&wy<=b.y+16){if(S.lvl<b.dist.lvl)return toast('Район закрыт: нужен уровень '+b.dist.lvl);return openS(shPOI,b.id)}return}
  let hit=null;for(let i=HS.length-1;i>=0;i--){const h=HS[i];if(x>=h.x&&x<=h.x+h.w&&y>=h.y&&y<=h.y+h.h){hit=h.id;break}}
- if((scene==='shelter'||scene==='hall'||scene==='storage')&&!sleeping&&!hit&&y>=curFloor().y0-6&&y<=curFloor().y1+4){const F=curFloor();HERO.tx=clamp(x,F.x0,F.x1);HERO.ty=clamp(y,F.y0,F.y1);return}
+ if((scene==='shelter'||scene==='hall'||scene==='storage')&&!S.sleeping&&!hit&&y>=curFloor().y0-6&&y<=curFloor().y1+4){const F=curFloor();HERO.tx=clamp(x,F.x0,F.x1);HERO.ty=clamp(y,F.y0,F.y1);return}
  if(!hit)return;
  if(scene==='hall'){
   if(hit==='char')return openS(shNeeds);

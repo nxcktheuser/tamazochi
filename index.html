@@ -5,12 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Wasteland Home</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@600;700&display=swap" rel="stylesheet">
 <style>
 html,body{margin:0;height:100%;background:#0b0d10;overflow:hidden;touch-action:none;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#e8ecef}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 #root{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0b0d10}
 #wrap{position:relative;overflow:hidden}
 #game{display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none}
+#txt{position:absolute;left:0;top:0;pointer-events:none}
 #hud{position:absolute;top:0;left:0;right:0;padding:6px 8px 14px;background:linear-gradient(#000c,#0000);pointer-events:none;font-size:11px;line-height:1.35}
 .hr{display:flex;justify-content:space-between;font-weight:600;margin-bottom:3px}
 .hb{display:flex;gap:4px;margin-bottom:3px}
@@ -49,6 +52,7 @@ input{width:100%;background:#252d35;border:1px solid #3a444d;border-radius:8px;c
 <body>
 <div id="root"><div id="wrap">
   <canvas id="game"></canvas>
+  <canvas id="txt"></canvas>
   <div id="hud"></div>
   <div id="hint"></div>
   <div id="bar"></div>
@@ -216,11 +220,23 @@ function doRaid(b){
 const VW=180,VH=320,WW=300,WH=460;
 const cv=$('game'),ctx=cv.getContext('2d');cv.width=VW;cv.height=VH;
 let SC=2;
-function resize(){SC=Math.min(innerWidth/VW,innerHeight/VH);const w=VW*SC,h=VH*SC;
- $('wrap').style.width=w+'px';$('wrap').style.height=h+'px';cv.style.width=w+'px';cv.style.height=h+'px'}
+/* Текст рисуется на отдельном холсте в родном разрешении экрана, поэтому буквы чёткие */
+const tcv=$('txt'),tctx=tcv.getContext('2d');let DPR=1;
+const TFONT='"Pixelify Sans",ui-monospace,Menlo,monospace';
+try{document.fonts.load('700 12px "Pixelify Sans"')}catch(e){}
+function resize(){SC=Math.min(innerWidth/VW,innerHeight/VH);const w=VW*SC,h=VH*SC;DPR=Math.min(3,window.devicePixelRatio||1);
+ $('wrap').style.width=w+'px';$('wrap').style.height=h+'px';cv.style.width=w+'px';cv.style.height=h+'px';
+ tcv.width=Math.round(w*DPR);tcv.height=Math.round(h*DPR);tcv.style.width=w+'px';tcv.style.height=h+'px'}
 addEventListener('resize',resize);resize();
 const R=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h)};
-function T(s,x,y,c,sz,al){ctx.font='bold '+(sz||6)+'px monospace';ctx.textAlign=al||'left';ctx.textBaseline='top';ctx.fillStyle='#000';ctx.fillText(s,Math.round(x)+1,Math.round(y)+1);ctx.fillStyle=c||'#fff';ctx.fillText(s,Math.round(x),Math.round(y))}
+let TQ=[];
+function T(s,x,y,c,sz,al){TQ.push({s,x,y,c:c||'#fff',sz:sz||6,al:al||'left'})}
+function flushText(){const k=SC*DPR;tctx.clearRect(0,0,tcv.width,tcv.height);tctx.textBaseline='top';tctx.lineJoin='round';
+ for(const q of TQ){tctx.font='700 '+Math.round(q.sz*1.2*k)+'px '+TFONT;tctx.textAlign=q.al;
+  const px=Math.round(q.x*k),py=Math.round((q.y-1)*k);
+  if(q.c!=='#222'){tctx.lineWidth=Math.max(2,Math.round(1.4*k));tctx.strokeStyle='#000';tctx.strokeText(q.s,px,py)}
+  tctx.fillStyle=q.c;tctx.fillText(q.s,px,py)}
+ TQ=[]}
 
 /* ---- characters ---- */
 function drawChar(x,y,L,o){
@@ -669,7 +685,7 @@ function frame(ts){const dt=Math.min(.05,(ts-last)/1000);last=ts;time+=dt;
  for(const z of SZ){z.x+=z.d*dt*4;if(z.x<4||z.x>170)z.d*=-1}
  updChar(dt);ctx.imageSmoothingEnabled=false;
  if(scene==='select')drawSelect();else if(scene==='shelter')drawShelter();else if(scene==='storage')drawStorage();else if(scene==='city')drawCity(dt);
- drawFX(dt);requestAnimationFrame(frame)}
+ drawFX(dt);flushText();requestAnimationFrame(frame)}
 
 load(()=>{offline();CH.y=floorY(0);CH.x=60;if(S.look==null)setScene('select');else setScene('shelter');updHud();requestAnimationFrame(frame)});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){offline();S.t=Date.now();updHud()}});

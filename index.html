@@ -261,7 +261,7 @@ function newGame(){ask('Начать заново? Текущий герой и 
 const RESET=(()=>{try{if(/[?&]reset\b/.test(location.search)&&!sessionStorage.getItem('wl_reset_done')){sessionStorage.setItem('wl_reset_done','1');return true}}catch(e){}return false})();
 
 /* ============ ПАНЕЛЬ РАЗРАБОТЧИКА (только при ?dev=1) ============ */
-const DEV=(()=>{try{if(/[?&]dev\b/.test(location.search))localStorage.setItem('wl_dev','1');return localStorage.getItem('wl_dev')==='1'}catch(e){return false}})();
+const DEV=(()=>{try{if(location.protocol==='file:')return true;if(/[?&]dev\b/.test(location.search))localStorage.setItem('wl_dev','1');return localStorage.getItem('wl_dev')==='1'}catch(e){return false}})();
 function devDo(a){
  if(a==='needs'){S.hp=maxHp();S.sat=S.thr=S.en=S.fun=S.comf=100;sleeping=false}
  if(a==='lvl6')S.lvl=Math.max(S.lvl,6);

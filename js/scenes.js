@@ -184,7 +184,7 @@ function drawStorageOld(){
 function drawCreate(){
  HS=[];drawRoomBg();ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,0,VW,VH);
  T('СОЗДАЙ ГЕРОЯ',90,10,'#e3b341',9,'center');
- const im=IMG['h_'+CR.sex+'_'+crLook()];if(im)drawHero(90,112,80,1,{img:im});
+ const im=heroImgFor(CR.sex,crLook());if(im)drawHero(90,112,80,1,{img:im});
  T(CR.name||S.name||'Выживший',90,118,'#fff',8,'center')}
 function drawSelectOld(){
  HS=[];['#1d2230','#2a2a45','#4a3550','#6e4350'].forEach((c,i)=>R(0,i*34,VW,34,c));

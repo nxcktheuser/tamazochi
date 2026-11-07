@@ -8,7 +8,7 @@ const tcv=$('txt'),tctx=tcv.getContext('2d');let DPR=1;
 const TFONT='"Pixelify Sans",ui-monospace,Menlo,monospace';
 try{document.fonts.load('700 12px "Pixelify Sans"')}catch(e){}
 function resize(){SC=Math.min(innerWidth/VW,innerHeight/VH);const w=VW*SC,h=VH*SC;DPR=Math.min(3,window.devicePixelRatio||1);
- K=Math.max(2,Math.round(SC*DPR));cv.width=VW*K;cv.height=VH*K;ctx.setTransform(K,0,0,K,0,0);
+ K=Math.max(2,Math.min(4,Math.round(SC*DPR)));/* потолок 4: на экранах 3x холст 7x давал ~3x лишних пикселей на кадр без видимого выигрыша */cv.width=VW*K;cv.height=VH*K;ctx.setTransform(K,0,0,K,0,0);
  $('wrap').style.width=w+'px';$('wrap').style.height=h+'px';cv.style.width=w+'px';cv.style.height=h+'px';
  tcv.width=Math.round(w*DPR);tcv.height=Math.round(h*DPR);tcv.style.width=w+'px';tcv.style.height=h+'px'}
 addEventListener('resize',resize);resize();
@@ -24,11 +24,14 @@ function flushText(){const k=SC*DPR;tctx.clearRect(0,0,tcv.width,tcv.height);tct
 
 /* ---- картинки: комната и спрайты героев ---- */
 const IMG={};
-function loadImg(k,src){const i=new Image();i.onload=()=>{IMG[k]=i};i.src=src}
-loadImg('room','assets/rooms/room_personal.webp');loadImg('hall','assets/rooms/room_hall.webp');loadImg('storage','assets/rooms/room_storage.webp');loadImg('map','assets/maps/city.webp');
+const IMGQ={};/* идемпотентно: повторный вызов не качает файл заново */
+function loadImg(k,src){if(IMG[k]||IMGQ[k])return;IMGQ[k]=1;const i=new Image();i.onload=()=>{IMG[k]=i};i.src=src}
+loadImg('room','assets/rooms/room_personal.webp');loadImg('hall','assets/rooms/room_hall.webp');loadImg('storage','assets/rooms/room_storage.webp');
 const LOOKIDS={female:['light','tan','brown','dark','short','loose','braid','pigtails'],male:['light','tan','brown','dark','shaved','sidepart','afro','mohawk','beard']};
 const LOOKNAME={short:'Короткая',loose:'Распущенные',braid:'Коса',pigtails:'Хвостики',shaved:'Бритый',sidepart:'Пробор',afro:'Афро',mohawk:'Ёж',beard:'Хвост и борода'};
-for(const sx in LOOKIDS)for(const id of LOOKIDS[sx])loadImg('h_'+sx+'_'+id,'assets/heroes/hero_'+sx+'_'+id+'.png');
+/* Карта города (1.2 МБ) и спрайты героев грузятся по требованию, а не все сразу при старте */
+const ensureMap=()=>loadImg('map','assets/maps/city.webp');
+function heroImgFor(sx,id){const k='h_'+sx+'_'+id;if(!IMG[k])loadImg(k,'assets/heroes/hero_'+sx+'_'+id+'.png');return IMG[k]}
 const ZTYPES=['regular','fast','soldier','bulky'];
 for(const z of ZTYPES)loadImg('z_'+z,'assets/zombies/zombie_'+z+'.png');
 for(const n of['hunger','thirst','energy','health','fun','comfort','mood_cheerful','mood_neutral','mood_grumpy','mood_angry'])loadImg('i_'+n,'assets/icons/icon_'+n+'.png');
@@ -39,7 +42,7 @@ const FLOORS={x0:20,x1:160,y0:224,y1:306};
 const curFloor=()=>scene==='hall'?FLOORH:scene==='storage'?FLOORS:FLOOR;
 const HERO={x:90,y:262,tx:90,ty:262,dir:1,walk:false};
 const heroH=y=>54+clamp((y-FLOOR.y0)/(FLOOR.y1-FLOOR.y0),0,1)*22;
-function heroImg(){const a=S.app||{sex:'male',tone:'tan'};return IMG['h_'+a.sex+'_'+(a.look||a.tone||'tan')]}
+function heroImg(){const a=S.app||{sex:'male',tone:'tan'};return heroImgFor(a.sex,a.look||a.tone||'tan')}
 function updHero(dt){const dx=HERO.tx-HERO.x,dy=HERO.ty-HERO.y,d=Math.hypot(dx,dy);HERO.walk=d>1;
  if(!HERO.walk)return;const sp=62*dt;if(d<=sp){HERO.x=HERO.tx;HERO.y=HERO.ty}else{HERO.x+=dx/d*sp;HERO.y+=dy/d*sp}
  if(Math.abs(dx)>1)HERO.dir=dx>0?1:-1}

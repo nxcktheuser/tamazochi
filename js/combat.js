@@ -42,7 +42,7 @@ function fightSkill(k){const f=FB;if(!f||f.end||f.cd[k]>f.t)return;
 function fightRetreat(){const f=FB;if(!f||f.end)return;f.end='retreat';f.endT=0;f.banner='ОТСТУПЛЕНИЕ';f.bannerT=9;f.sig=''}
 function updFightBar(){const f=FB;if(!f)return;const c=k=>Math.max(0,Math.ceil(f.cd[k]-f.t)),sig=[c('block'),c('gren'),c('heal'),S.res.scrap,S.res.meds,f.end?1:0].join('|');if(sig===f.sig)return;f.sig=sig;const d=f.end;
  $('bar').innerHTML=`<button ${d||c('block')?'disabled':''} onclick="fightSkill('block')">Блок${c('block')?' '+c('block'):''}</button><button ${d||c('gren')||S.res.scrap<3?'disabled':''} onclick="fightSkill('gren')">Граната ${ic('scrap')}3${c('gren')?' · '+c('gren'):''}</button><button ${d||c('heal')||S.res.meds<1?'disabled':''} onclick="fightSkill('heal')">${ic('medkit')} ${S.res.meds}${c('heal')?' · '+c('heal'):''}</button><button ${d?'disabled':''} onclick="fightRetreat()">Бежать</button>`}
-function finishFight(){const f=FB;FB=null;const log=doRaid(f.b,{out:{zs:f.types,kills:f.kills,dead:f.end==='lose',hp:f.hp,retreat:f.end==='retreat'}});RA=null;setScene('city');openS(shReport,log)}
+function finishFight(){const f=FB;FB=null;const dead=f.end==='lose',retreat=f.end==='retreat';const log=doRaid(f.b,{out:{zs:f.types,kills:f.kills,dead,hp:f.hp,retreat}});f.end=null;RA=null;setScene('city');openS(shReport,log)}
 function drawFight(dt){HS=[];const f=FB;if(!f)return;updFight(f,dt);if(!FB)return;updFightBar();const b=f.b;
  ctx.save();if(f.shake>0)ctx.translate(rnd(-1,1)*1.6,rnd(-1,1)*1.6);
  if(IMG.map){const sx=clamp(b.x-90,0,WW-VW),sy=clamp(b.y-230,0,WH-VH);ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(IMG.map,-sx,-sy,WW,WH);ctx.restore()}else R(0,0,VW,VH,'#1b1814');

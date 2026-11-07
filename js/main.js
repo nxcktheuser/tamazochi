@@ -37,6 +37,6 @@ function frame(ts){const dt=Math.min(.05,(ts-last)/1000);last=ts;time+=dt;
  if(scene==='create')drawCreate();else if(scene==='shelter')drawShelter();else if(scene==='hall')drawHall();else if(scene==='storage')drawStorage();else if(scene==='city')drawCity(dt);else if(scene==='battle')drawBattle(dt);else if(scene==='fight')drawFight(dt);
  drawFX(dt);flushText();requestAnimationFrame(frame)}
 
-const boot=()=>load(()=>{offline();CH.y=floorY(0);CH.x=60;if(S.app==null)setScene('create');else setScene('shelter');updHud();requestAnimationFrame(frame)});
+const boot=()=>load(()=>{offline();CH.y=floorY(0);CH.x=60;if(S.app==null)setScene('create');else setScene('shelter');updHud();requestAnimationFrame(frame);setTimeout(ensureMap,3000)});/* карту подгружаем в фоне, чтобы вылазка не ждала */
 if(RESET)wipeSave(boot);else boot();
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){offline();S.t=Date.now();updHud()}});

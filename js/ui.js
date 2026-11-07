@@ -64,7 +64,7 @@ function startGame(){const v=(CR.name||'').trim();S.look=0;S.app={sex:CR.sex,loo
 
 /* ============ SCENE CONTROL / HUD ============ */
 const NB=(l,i,o,c='')=>`<button class="nb${c}" onclick="${o}"><span>${i}</span>${l}</button>`;
-function setScene(s){scene=s;closeSheet();
+function setScene(s){scene=s;closeSheet();if(s==='city'||s==='battle'||s==='fight')ensureMap();
  const bar=$('bar');
  if(s==='shelter')bar.innerHTML=NB('Тамбур','🚪',"setScene('hall')")+NB('Убежище','🏠','openS(shHome)')+NB('Герой','🧍','openS(shNeeds)',' hot');
  else if(s==='hall')bar.innerHTML=NB('Комната','⬅️',"setScene('shelter')")+NB('Герой','🧍','openS(shNeeds)',' hot');
